@@ -1,4 +1,4 @@
-// worker-source.js - v1
+// worker-source.js - v2 - 添加管理员认证
 // Cloudflare Worker 版卡密验证服务器
 // 由 build.js 注入 bookmarklet 代码后生成 _worker.js 部署
 // D1 绑定名: DB
@@ -203,6 +203,35 @@ export default {
         }
 
         // ---- 管理员 API ----
+
+        // 管理员登录（复用现有防暴力破解机制）
+        if (url.pathname === '/api/admin/login' && request.method === 'POST') {
+            const rateCheck = await checkRateLimit(db, ip);
+            if (rateCheck.blocked) return jsonResponse({ ok: false, msg: rateCheck.msg, blocked: true }, 429);
+
+            const body = await request.json().catch(() => ({}));
+            const password = env.ADMIN_PASSWORD || 'bossboss';
+
+            if (body.password !== password) {
+                const failure = await recordFailure(db, ip);
+                const msg = failure.locked
+                    ? `错误次数过多，已锁定 ${failure.lock_minutes} 分钟`
+                    : `密码错误（还剩 ${failure.remain_attempts} 次机会）`;
+                return jsonResponse({ ok: false, msg, remain_attempts: failure.remain_attempts, blocked: failure.locked }, 403);
+            }
+
+            await clearFailures(db, ip);
+            return jsonResponse({ ok: true });
+        }
+
+        // 认证守卫：其他所有 admin 路由需要 Bearer token
+        if (url.pathname.startsWith('/api/admin/')) {
+            const authHeader = request.headers.get('Authorization');
+            const password = env.ADMIN_PASSWORD || 'bossboss';
+            if (!authHeader || authHeader !== `Bearer ${password}`) {
+                return jsonResponse({ ok: false, msg: '未授权' }, 401);
+            }
+        }
 
         if (url.pathname === '/api/admin/keys' && request.method === 'GET') {
             const rows = await db.prepare('SELECT * FROM licenses ORDER BY created_at DESC').all();

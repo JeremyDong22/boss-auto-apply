@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- admin.html - v2 -->
+<!-- admin.html - v3 - 添加管理员密码登录 -->
 <!-- Boss自动投递助手 - 管理员后台（卡密管理 + 数据概览，默认按天计费） -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -251,6 +251,59 @@
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
+  /* 登录遮罩 */
+  .login-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26,26,46,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  }
+  .login-overlay.hidden { display: none; }
+  .login-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px 36px;
+    width: 340px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    text-align: center;
+  }
+  .login-card h2 {
+    font-size: 18px;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+  }
+  .login-card input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  .login-card input:focus { border-color: #1a1a2e; }
+  .login-btn {
+    width: 100%;
+    padding: 10px;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .login-btn:hover { background: #16213e; }
+  .login-error {
+    margin-top: 12px;
+    color: #e74c3c;
+    font-size: 13px;
+    min-height: 20px;
+  }
+
   @media (max-width: 640px) {
     .container { padding: 16px 12px; }
     .generate-form { flex-direction: column; align-items: stretch; }
@@ -261,9 +314,24 @@
 </head>
 <body>
 
+<!-- 登录遮罩 -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <h2>管理员登录</h2>
+    <form onsubmit="doLogin(event)">
+      <input type="password" id="loginPw" placeholder="请输入管理密码" autofocus>
+      <button type="submit" class="login-btn">登录</button>
+    </form>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
 <div class="navbar">
   <h1>Boss自动投递 - 管理后台</h1>
-  <button class="refresh-btn" onclick="loadData()">刷新数据</button>
+  <div>
+    <button class="refresh-btn" onclick="loadData()">刷新数据</button>
+    <button class="refresh-btn" onclick="logout()" style="margin-left:8px">退出登录</button>
+  </div>
 </div>
 
 <div class="container">
@@ -321,6 +389,57 @@ var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.
     ? 'http://localhost:3456'
     : 'https://boss-auto-apply-api.hengd2.workers.dev';
 
+// 管理员认证
+function getAdminPw() { return sessionStorage.getItem('admin_pw'); }
+
+function showLogin() {
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('loginPw').value = '';
+    document.getElementById('loginError').textContent = '';
+}
+
+function logout() {
+    sessionStorage.removeItem('admin_pw');
+    showLogin();
+}
+
+async function doLogin(e) {
+    e.preventDefault();
+    var pw = document.getElementById('loginPw').value.trim();
+    if (!pw) return;
+    try {
+        var res = await fetch(API_BASE + '/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw })
+        });
+        var data = await res.json();
+        if (!data.ok) {
+            document.getElementById('loginError').textContent = data.msg;
+            return;
+        }
+        sessionStorage.setItem('admin_pw', pw);
+        document.getElementById('loginOverlay').classList.add('hidden');
+        loadData();
+    } catch(err) {
+        document.getElementById('loginError').textContent = '连接失败';
+    }
+}
+
+function adminFetch(url, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + getAdminPw();
+    return fetch(url, options).then(function(res) {
+        if (res.status === 401) {
+            sessionStorage.removeItem('admin_pw');
+            showLogin();
+            throw new Error('未授权');
+        }
+        return res;
+    });
+}
+
 function showToast(msg) {
     var t = document.getElementById('toast');
     t.textContent = msg;
@@ -357,7 +476,7 @@ function decodeFp(fp) {
 // 加载数据
 async function loadData() {
     try {
-        var res = await fetch(API_BASE + '/api/admin/keys');
+        var res = await adminFetch(API_BASE + '/api/admin/keys');
         var data = await res.json();
         if (!data.ok) { showToast('加载失败'); return; }
 
@@ -442,7 +561,7 @@ async function generateKeys() {
     var count = parseInt(document.getElementById('genCount').value) || 1;
 
     try {
-        var res = await fetch(API_BASE + '/api/admin/generate', {
+        var res = await adminFetch(API_BASE + '/api/admin/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ days: days, max_devices: maxDevices, count: count })
@@ -473,7 +592,7 @@ function copyKeys() {
 
 // 禁用/启用卡密
 async function disableKey(code) {
-    await fetch(API_BASE + '/api/admin/disable', {
+    await adminFetch(API_BASE + '/api/admin/disable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: code })
@@ -484,7 +603,7 @@ async function disableKey(code) {
 
 async function deleteKey(code) {
     if (!confirm('确定删除 ' + code + '？此操作不可恢复')) return;
-    await fetch(API_BASE + '/api/admin/delete', {
+    await adminFetch(API_BASE + '/api/admin/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: code })
@@ -494,7 +613,7 @@ async function deleteKey(code) {
 }
 
 async function enableKey(code) {
-    await fetch(API_BASE + '/api/admin/enable', {
+    await adminFetch(API_BASE + '/api/admin/enable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: code })
@@ -506,7 +625,7 @@ async function enableKey(code) {
 // 加载被锁定的 IP
 async function loadBlocked() {
     try {
-        var res = await fetch(API_BASE + '/api/admin/blocked');
+        var res = await adminFetch(API_BASE + '/api/admin/blocked');
         var data = await res.json();
         var section = document.getElementById('blockedSection');
         var container = document.getElementById('blockedContainer');
@@ -532,7 +651,7 @@ async function loadBlocked() {
 }
 
 async function unblockIP(ip) {
-    await fetch(API_BASE + '/api/admin/unblock', {
+    await adminFetch(API_BASE + '/api/admin/unblock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ip: ip })
@@ -541,9 +660,11 @@ async function unblockIP(ip) {
     loadBlocked();
 }
 
-// 初始加载
-loadData();
-loadBlocked();
+// 初始加载：已登录则加载数据，否则显示登录
+if (getAdminPw()) {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    loadData();
+}
 </script>
 </body>
 </html>
