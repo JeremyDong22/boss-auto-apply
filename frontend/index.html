@@ -279,23 +279,23 @@
     <h2>获取卡密</h2>
     <p>购买卡密后，在 Boss直聘 页面点击书签输入即可使用。</p>
     <div class="pricing-cards">
-      <div class="price-card" onclick="copyWechat('体验卡 1天/1元')">
+      <div class="price-card">
         <div class="duration">体验卡</div>
         <div class="price">1<span>元</span></div>
         <div class="unit">1天</div>
       </div>
-      <div class="price-card popular" onclick="copyWechat('周卡 7天/5元')">
+      <div class="price-card popular">
         <div class="duration">周卡</div>
         <div class="price">5<span>元</span></div>
         <div class="unit">7天</div>
       </div>
-      <div class="price-card" onclick="copyWechat('月卡 30天/15元')">
+      <div class="price-card">
         <div class="duration">月卡</div>
         <div class="price">15<span>元</span></div>
         <div class="unit">30天</div>
       </div>
     </div>
-    <p class="note" style="margin-top:14px;text-align:center">联系客服购买：微信 <b>xmin9805</b>（付款后发送卡密）</p>
+    <p class="note" style="margin-top:14px;text-align:center">求 Jeremy，Jeremy 会免费给你</p>
   </div>
 
   <!-- Notes -->
@@ -321,14 +321,6 @@ function showToast(msg) {
     t.textContent = msg;
     t.style.transform = 'translateX(-50%) translateY(0)';
     setTimeout(function() { t.style.transform = 'translateX(-50%) translateY(-80px)'; }, 2500);
-}
-
-function copyWechat(plan) {
-    navigator.clipboard.writeText('xmin9805').then(function() {
-        showToast('微信号已复制: xmin9805 (' + plan + ')');
-    }).catch(function() {
-        showToast('微信号: xmin9805');
-    });
 }
 
 // ---- 配置 ----

@@ -1,7 +1,6 @@
-// v10 - Boss 直聘自动投递 Bookmarklet
-// 改进：限流弹窗全程检测 + 面板显示卡密信息 + 换卡密功能
+// v11 - Boss 直聘自动投递 Bookmarklet
+// 改进：每次点击"开始投递"时先验证卡密，无效则拦截并提示
 // 通过 loader bookmarklet 从服务器加载，key 存储在 localStorage
-// 压缩版已移除，使用 loader 方式加载可读版（见 frontend/index.html）
 
 // ===== 可读版源码 =====
 
@@ -55,6 +54,9 @@
                     cursor:pointer;white-space:nowrap">换卡密</button>
             </div>
             <div id="aa-key-msg" style="font-size:11px;margin-top:6px;display:none"></div>
+            <a href="https://boss-auto-apply-website.pages.dev" target="_blank"
+                style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">官网 / 购买卡密 / 联系客服</a>
         </div>`;
     document.body.appendChild(panel);
 
@@ -114,6 +116,21 @@
         }
     };
 
+    // 验证卡密是否仍然有效（调用 /api/check）
+    async function checkKeyValid() {
+        var key = window.__BOSS_KEY || localStorage.getItem('boss_auto_key');
+        if (!key) return { valid: false, msg: '未找到卡密' };
+        var api = window.__BOSS_API || 'https://boss-auto-apply-api.hengd2.workers.dev';
+        try {
+            var res = await fetch(api + '/api/check?key=' + encodeURIComponent(key));
+            var data = await res.json();
+            if (!data.ok) return { valid: false, msg: data.msg };
+            return { valid: true, info: data.info };
+        } catch (e) {
+            return { valid: false, msg: '网络错误: ' + e.message };
+        }
+    }
+
     function wait(ms) {
         return new Promise(function (r) { setTimeout(r, ms); });
     }
@@ -170,6 +187,18 @@
         }
 
         status('⚠ 今日已达150人上限！已投递' + count + '个，跳过' + skipped + '个');
+
+        // 上报限流事件到后台
+        var reportApi = window.__BOSS_API || 'https://boss-auto-apply-api.hengd2.workers.dev';
+        var reportKey = window.__BOSS_KEY || localStorage.getItem('boss_auto_key') || '';
+        if (reportKey) {
+            try {
+                navigator.sendBeacon(reportApi + '/api/report',
+                    new Blob([JSON.stringify({ key: reportKey, job: '[限流] 今日已达150人上限', salary: '' })],
+                    { type: 'application/json' }));
+            } catch(e) {}
+        }
+
         return true;
     }
 
@@ -244,6 +273,25 @@
             if (inner) inner.style.background = 'linear-gradient(135deg,#00bebd,#00a8a7)';
         }
 
+        // 每次开始投递前验证卡密有效性
+        status('验证卡密中...');
+        var keyCheck = await checkKeyValid();
+        if (!running) return;
+        if (!keyCheck.valid) {
+            running = false;
+            // 面板变红提示
+            var inner2 = p ? p.querySelector('div') : null;
+            if (inner2) inner2.style.background = 'linear-gradient(135deg,#e74c3c,#c0392b)';
+            status('卡密无效: ' + keyCheck.msg);
+            return;
+        }
+        // 更新面板上的剩余天数
+        if (keyCheck.info) {
+            window.__BOSS_INFO = keyCheck.info;
+            var keyLine = document.getElementById('aa-key-line');
+            if (keyLine) keyLine.textContent = (window.__BOSS_KEY || '') + ' | 剩余' + keyCheck.info.remain_days + '天';
+        }
+
         status('正在启动...');
         await wait(1000);
         if (!running) return;
@@ -280,7 +328,9 @@
             if (checkChatBlock()) break;
 
             var name = card.querySelector('.job-name');
-            var jobName = name ? name.textContent : '未知';
+            var jobName = name ? name.textContent.trim() : '未知';
+            var salaryEl = card.querySelector('.job-salary');
+            var jobSalary = salaryEl ? salaryEl.textContent.trim() : '';
             status('[' + (idx + 1) + '/' + cards.length + '] ' + jobName);
 
             clickCard(card);
@@ -305,6 +355,17 @@
                 count++;
                 updateUI();
                 status('已投递 ' + jobName);
+
+                // 静默上报投递记录（sendBeacon 不阻塞、不等响应）
+                var reportApi = window.__BOSS_API || 'https://boss-auto-apply-api.hengd2.workers.dev';
+                var reportKey = window.__BOSS_KEY || localStorage.getItem('boss_auto_key') || '';
+                if (reportKey) {
+                    try {
+                        navigator.sendBeacon(reportApi + '/api/report',
+                            new Blob([JSON.stringify({ key: reportKey, job: jobName, salary: jobSalary })],
+                            { type: 'application/json' }));
+                    } catch(e) {}
+                }
             } else {
                 var chatBtn = findBtn('继续沟通');
                 if (chatBtn) {

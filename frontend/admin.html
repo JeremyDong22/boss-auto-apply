@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- admin.html - v3 - 添加管理员密码登录 -->
-<!-- Boss自动投递助手 - 管理员后台（卡密管理 + 数据概览，默认按天计费） -->
+<!-- admin.html - v4 - 添加投递追踪统计（每日汇总 + 详细日志） -->
+<!-- Boss自动投递助手 - 管理员后台（卡密管理 + 投递追踪，默认按天计费） -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台 - Boss自动投递</title>
@@ -304,6 +304,79 @@
     min-height: 20px;
   }
 
+  /* 投递统计弹窗 */
+  .stats-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  }
+  .stats-overlay.hidden { display: none; }
+  .stats-modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    width: 680px;
+    max-width: 95vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  }
+  .stats-modal h2 {
+    font-size: 18px;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+  }
+  .stats-modal .stats-summary {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 16px;
+  }
+  .stats-modal .close-btn {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #999;
+    line-height: 1;
+  }
+  .stats-modal .close-btn:hover { color: #333; }
+  .stats-modal h3 {
+    font-size: 14px;
+    color: #1a1a2e;
+    margin: 16px 0 8px;
+  }
+  .daily-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .daily-bar .date { width: 80px; color: #666; text-align: right; }
+  .daily-bar .bar {
+    height: 18px;
+    background: linear-gradient(90deg, #00bebd, #00a8a7);
+    border-radius: 3px;
+    min-width: 2px;
+    transition: width 0.3s;
+  }
+  .daily-bar .count { color: #333; font-weight: 600; min-width: 30px; }
+  .log-item {
+    display: flex;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 12px;
+  }
+  .log-item .log-time { color: #999; white-space: nowrap; }
+  .log-item .log-job { color: #333; flex: 1; }
+  .log-item .log-salary { color: #27ae60; font-weight: 600; white-space: nowrap; }
+
   @media (max-width: 640px) {
     .container { padding: 16px 12px; }
     .generate-form { flex-direction: column; align-items: stretch; }
@@ -380,6 +453,19 @@
     </div>
   </div>
 
+</div>
+
+<!-- 投递统计弹窗 -->
+<div class="stats-overlay hidden" id="statsOverlay" onclick="if(event.target===this)closeStats()">
+  <div class="stats-modal">
+    <button class="close-btn" onclick="closeStats()">&times;</button>
+    <h2 id="statsTitle">投递统计</h2>
+    <div class="stats-summary" id="statsSummary"></div>
+    <h3>每日投递量</h3>
+    <div id="dailyChart"></div>
+    <h3>最近投递记录</h3>
+    <div id="logsContainer"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -539,6 +625,7 @@ function renderTable(keys) {
             actionHtml = '<button class="action-btn danger" onclick="disableKey(\'' + k.code + '\')">禁用</button> ';
         }
         actionHtml += '<button class="action-btn danger" onclick="deleteKey(\'' + k.code + '\')" style="margin-left:4px">删除</button>';
+        actionHtml += '<button class="action-btn" onclick="viewStats(\'' + k.code + '\')" style="margin-left:4px">统计</button>';
 
         html += '<tr>' +
             '<td><span class="key-code">' + k.code + '</span></td>' +
@@ -658,6 +745,65 @@ async function unblockIP(ip) {
     });
     showToast('已解锁 ' + ip);
     loadBlocked();
+}
+
+// 投递统计
+async function viewStats(code) {
+    document.getElementById('statsOverlay').classList.remove('hidden');
+    document.getElementById('statsTitle').textContent = '投递统计 - ' + code;
+    document.getElementById('statsSummary').textContent = '加载中...';
+    document.getElementById('dailyChart').innerHTML = '';
+    document.getElementById('logsContainer').innerHTML = '';
+
+    try {
+        var res = await adminFetch(API_BASE + '/api/admin/stats?key=' + encodeURIComponent(code));
+        var data = await res.json();
+        if (!data.ok) { document.getElementById('statsSummary').textContent = '加载失败'; return; }
+
+        document.getElementById('statsSummary').textContent = '累计投递: ' + data.total_applied + ' 个';
+
+        // 每日柱状图
+        var daily = data.daily || [];
+        if (daily.length === 0) {
+            document.getElementById('dailyChart').innerHTML = '<div style="color:#999;font-size:13px">暂无数据</div>';
+        } else {
+            var maxApplied = Math.max.apply(null, daily.map(function(d) { return d.applied; }));
+            if (maxApplied === 0) maxApplied = 1;
+            var chartHtml = '';
+            daily.forEach(function(d) {
+                var barWidth = Math.round((d.applied / maxApplied) * 300);
+                chartHtml += '<div class="daily-bar">' +
+                    '<span class="date">' + d.date.slice(5) + '</span>' +
+                    '<div class="bar" style="width:' + barWidth + 'px"></div>' +
+                    '<span class="count">' + d.applied + '</span>' +
+                    '</div>';
+            });
+            document.getElementById('dailyChart').innerHTML = chartHtml;
+        }
+
+        // 最近投递记录
+        var logs = data.logs || [];
+        if (logs.length === 0) {
+            document.getElementById('logsContainer').innerHTML = '<div style="color:#999;font-size:13px">暂无记录</div>';
+        } else {
+            var logsHtml = '';
+            logs.forEach(function(l) {
+                var isLimit = (l.job_name || '').indexOf('[限流]') === 0;
+                logsHtml += '<div class="log-item" style="' + (isLimit ? 'background:#fff3e0;border-radius:4px;padding:6px 8px' : '') + '">' +
+                    '<span class="log-time">' + (l.applied_at || '') + '</span>' +
+                    '<span class="log-job" style="' + (isLimit ? 'color:#e65100;font-weight:600' : '') + '">' + (l.job_name || '-') + '</span>' +
+                    '<span class="log-salary">' + (l.salary || '') + '</span>' +
+                    '</div>';
+            });
+            document.getElementById('logsContainer').innerHTML = logsHtml;
+        }
+    } catch(e) {
+        document.getElementById('statsSummary').textContent = '请求失败: ' + e.message;
+    }
+}
+
+function closeStats() {
+    document.getElementById('statsOverlay').classList.add('hidden');
 }
 
 // 初始加载：已登录则加载数据，否则显示登录

@@ -15,6 +15,13 @@ Boss 直聘（zhipin.com）自动投递简历工具。核心是一个 Bookmarkle
 | 数据库 | boss-license-db (741596d0-1cdd-4969-b336-c64a605472eb) | Cloudflare D1 |
 | GitHub | https://github.com/JeremyDong22/boss-auto-apply (private) | |
 
+## 管理员信息
+
+- **管理后台地址**: https://boss-auto-apply-website.pages.dev/admin.html
+- **管理员密码**: `bossboss`（可通过 Worker 环境变量 `ADMIN_PASSWORD` 修改）
+- **认证方式**: 密码登录 → sessionStorage 存储 → 所有 admin API 请求带 `Bearer <password>` 头
+- **客服微信**: xmin9805
+
 ## 架构
 
 ```
@@ -77,6 +84,10 @@ wrangler d1 execute boss-license-db --remote --file=backend/schema.sql  # 初始
 ### 弹窗结构
 - 投递成功弹窗：`.greet-boss-dialog`，关闭用 `.cancel-btn`（留在此页）
 - 限流弹窗：`.chat-block-dialog`（每日 150 人上限），关闭用 `.chat-block-footer .sure-btn`
+
+## 技术债
+
+- [ ] Boss 直聘在约 120 人沟通时可能弹出提示弹窗（具体 DOM 结构待确认），目前脚本未检测。需抓取该弹窗 HTML 确认选择器后添加检测逻辑。
 
 ### 滚动机制
 - **滚动容器是 `window`**（不是 `.job-list-container`，后者 overflow: visible 不可滚动）

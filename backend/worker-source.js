@@ -1,4 +1,4 @@
-// worker-source.js - v2 - 添加管理员认证
+// worker-source.js - v3 - 修复CORS支持Authorization头
 // Cloudflare Worker 版卡密验证服务器
 // 由 build.js 注入 bookmarklet 代码后生成 _worker.js 部署
 // D1 绑定名: DB
@@ -22,7 +22,7 @@ function jsonResponse(data, status = 200) {
             'Content-Type': 'application/json; charset=utf-8',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type'
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
         }
     });
 }
@@ -47,6 +47,17 @@ function generateKeyCode() {
 }
 
 function now() { return new Date().toISOString(); }
+
+// 北京时间日期字符串（UTC+8）
+function beijingDate() {
+    const d = new Date(Date.now() + 8 * 3600000);
+    return d.toISOString().slice(0, 10);
+}
+
+function beijingTime() {
+    const d = new Date(Date.now() + 8 * 3600000);
+    return d.toISOString().slice(0, 19).replace('T', ' ');
+}
 
 // ---- 防暴力破解（D1 存储） ----
 
@@ -93,8 +104,8 @@ async function clearFailures(db, ip) {
 
 async function validateKey(db, keyCode, fingerprint) {
     const key = await db.prepare('SELECT * FROM licenses WHERE code = ?').bind(keyCode).first();
-    if (!key) return { valid: false, msg: '卡密无效' };
-    if (key.disabled) return { valid: false, msg: '卡密已被禁用' };
+    if (!key) return { valid: false, reason: 'not_found', msg: '卡密无效' };
+    if (key.disabled) return { valid: false, reason: 'disabled', msg: '卡密已被禁用，请联系管理员' };
 
     // 首次激活
     let activatedAt = key.activated_at;
@@ -106,7 +117,7 @@ async function validateKey(db, keyCode, fingerprint) {
     // 检查过期
     const expiresAt = new Date(new Date(activatedAt).getTime() + key.days * 24 * 60 * 60 * 1000);
     if (new Date() > expiresAt) {
-        return { valid: false, msg: `卡密已过期（${expiresAt.toLocaleDateString('zh-CN')} 到期）` };
+        return { valid: false, reason: 'expired', msg: `卡密已过期，请联系管理员续费` };
     }
 
     // 设备指纹
@@ -150,7 +161,7 @@ export default {
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type'
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
                 }
             });
         }
@@ -171,6 +182,10 @@ export default {
 
             const result = await validateKey(db, keyCode, fp);
             if (!result.valid) {
+                // 禁用/过期的卡密直接返回提示，不计入暴力破解次数
+                if (result.reason === 'disabled' || result.reason === 'expired') {
+                    return jsonResponse({ ok: false, msg: result.msg }, 403);
+                }
                 const failure = await recordFailure(db, ip);
                 const msg = failure.locked
                     ? `卡密无效，已锁定 ${failure.lock_minutes} 分钟`
@@ -191,6 +206,10 @@ export default {
 
             const result = await validateKey(db, keyCode, null);
             if (!result.valid) {
+                // 禁用/过期的卡密直接返回提示，不计入暴力破解次数
+                if (result.reason === 'disabled' || result.reason === 'expired') {
+                    return jsonResponse({ ok: false, msg: result.msg }, 403);
+                }
                 const failure = await recordFailure(db, ip);
                 const msg = failure.locked
                     ? `卡密无效，已锁定 ${failure.lock_minutes} 分钟`
@@ -200,6 +219,34 @@ export default {
 
             await clearFailures(db, ip);
             return jsonResponse({ ok: true, info: result.info });
+        }
+
+        // ---- 投递上报 API（bookmarklet 静默调用） ----
+
+        if (url.pathname === '/api/report' && request.method === 'POST') {
+            const body = await request.json().catch(() => ({}));
+            const keyCode = body.key;
+            if (!keyCode) return jsonResponse({ ok: false }, 400);
+
+            // 简单验证 key 存在
+            const key = await db.prepare('SELECT code FROM licenses WHERE code = ?').bind(keyCode).first();
+            if (!key) return jsonResponse({ ok: false }, 403);
+
+            const date = beijingDate();
+            const time = beijingTime();
+
+            // 写入详细日志
+            await db.prepare(
+                'INSERT INTO apply_logs (license_code, job_name, salary, applied_at) VALUES (?, ?, ?, ?)'
+            ).bind(keyCode, body.job || '', body.salary || '', time).run();
+
+            // 更新每日汇总
+            await db.prepare(
+                'INSERT INTO daily_stats (license_code, date, applied, skipped) VALUES (?, ?, 1, 0) ' +
+                'ON CONFLICT(license_code, date) DO UPDATE SET applied = applied + 1'
+            ).bind(keyCode, date).run();
+
+            return jsonResponse({ ok: true });
         }
 
         // ---- 管理员 API ----
@@ -328,6 +375,44 @@ export default {
             const body = await request.json().catch(() => ({}));
             await db.prepare('DELETE FROM rate_limits WHERE ip = ?').bind(body.ip).run();
             return jsonResponse({ ok: true });
+        }
+
+        // 查看某个卡密的投递统计（每日汇总 + 最近详细记录）
+        if (url.pathname === '/api/admin/stats' && request.method === 'GET') {
+            const keyCode = url.searchParams.get('key');
+            if (!keyCode) return jsonResponse({ ok: false, msg: '缺少卡密' }, 400);
+
+            // 每日汇总（最近30天）
+            const dailyRows = await db.prepare(
+                'SELECT * FROM daily_stats WHERE license_code = ? ORDER BY date DESC LIMIT 30'
+            ).bind(keyCode).all();
+
+            // 最近投递详情（最近50条）
+            const logRows = await db.prepare(
+                'SELECT * FROM apply_logs WHERE license_code = ? ORDER BY applied_at DESC LIMIT 50'
+            ).bind(keyCode).all();
+
+            // 累计投递总数
+            const totalRow = await db.prepare(
+                'SELECT SUM(applied) as total_applied FROM daily_stats WHERE license_code = ?'
+            ).bind(keyCode).first();
+
+            return jsonResponse({
+                ok: true,
+                total_applied: totalRow?.total_applied || 0,
+                daily: dailyRows.results,
+                logs: logRows.results
+            });
+        }
+
+        // 清理90天前的详细日志（可手动触发或定时调用）
+        if (url.pathname === '/api/admin/cleanup' && request.method === 'POST') {
+            const cutoff = new Date(Date.now() - 90 * 24 * 3600000 + 8 * 3600000)
+                .toISOString().slice(0, 10);
+            const result = await db.prepare(
+                'DELETE FROM apply_logs WHERE applied_at < ?'
+            ).bind(cutoff).run();
+            return jsonResponse({ ok: true, deleted: result.meta.changes });
         }
 
         return jsonResponse({ error: 'Not Found' }, 404);

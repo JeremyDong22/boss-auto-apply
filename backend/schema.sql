@@ -1,4 +1,4 @@
--- schema.sql - v1
+-- schema.sql - v2
 -- Boss 自动投递 - D1 数据库表结构
 -- 部署后在 Cloudflare Dashboard > D1 > 你的数据库 > Console 中执行
 
@@ -24,4 +24,22 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   failures INTEGER NOT NULL DEFAULT 0,
   blocked_until TEXT,
   last_attempt TEXT
+);
+
+-- 每日投递汇总（永久保留，每个卡密每天一行）
+CREATE TABLE IF NOT EXISTS daily_stats (
+  license_code TEXT NOT NULL,
+  date TEXT NOT NULL,
+  applied INTEGER NOT NULL DEFAULT 0,
+  skipped INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (license_code, date)
+);
+
+-- 投递详细记录（保留90天，含岗位名称和薪资）
+CREATE TABLE IF NOT EXISTS apply_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  license_code TEXT NOT NULL,
+  job_name TEXT,
+  salary TEXT,
+  applied_at TEXT NOT NULL
 );
