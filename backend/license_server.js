@@ -342,6 +342,18 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
     }
 
+    // 删除卡密
+    if (url.pathname === '/api/admin/delete' && req.method === 'POST') {
+        const body = await readBody(req);
+        const keys = loadKeys();
+        if (!keys[body.key]) { res.writeHead(404); res.end(JSON.stringify({ ok: false, msg: '卡密不存在' })); return; }
+        delete keys[body.key];
+        saveKeys(keys);
+        console.log(`[${new Date().toLocaleTimeString()}] 删除卡密: ${body.key}`);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
+    }
+
     // 查看被锁定的 IP
     if (url.pathname === '/api/admin/blocked' && req.method === 'GET') {
         const now = new Date();

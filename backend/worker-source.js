@@ -273,6 +273,15 @@ export default {
             return jsonResponse({ ok: true });
         }
 
+        if (url.pathname === '/api/admin/delete' && request.method === 'POST') {
+            const body = await request.json().catch(() => ({}));
+            // 先删关联设备，再删卡密
+            await db.prepare('DELETE FROM devices WHERE license_code = ?').bind(body.key).run();
+            const result = await db.prepare('DELETE FROM licenses WHERE code = ?').bind(body.key).run();
+            if (result.meta.changes === 0) return jsonResponse({ ok: false, msg: '卡密不存在' }, 404);
+            return jsonResponse({ ok: true });
+        }
+
         if (url.pathname === '/api/admin/blocked' && request.method === 'GET') {
             const nowStr = now();
             const rows = await db.prepare(

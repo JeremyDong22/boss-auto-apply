@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- admin.html - v1 -->
-<!-- Boss自动投递助手 - 管理员后台（卡密管理 + 数据概览） -->
+<!-- admin.html - v2 -->
+<!-- Boss自动投递助手 - 管理员后台（卡密管理 + 数据概览，默认按天计费） -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台 - Boss自动投递</title>
@@ -283,7 +283,7 @@
     <div class="generate-form">
       <div class="form-group">
         <label>有效天数</label>
-        <input type="number" id="genDays" value="30" min="1" max="365">
+        <input type="number" id="genDays" value="1" min="1" max="365">
       </div>
       <div class="form-group">
         <label>设备上限</label>
@@ -415,10 +415,11 @@ function renderTable(keys) {
         // 操作按钮
         var actionHtml;
         if (k.disabled) {
-            actionHtml = '<button class="action-btn success" onclick="enableKey(\'' + k.code + '\')">启用</button>';
+            actionHtml = '<button class="action-btn success" onclick="enableKey(\'' + k.code + '\')">启用</button> ';
         } else {
-            actionHtml = '<button class="action-btn danger" onclick="disableKey(\'' + k.code + '\')">禁用</button>';
+            actionHtml = '<button class="action-btn danger" onclick="disableKey(\'' + k.code + '\')">禁用</button> ';
         }
+        actionHtml += '<button class="action-btn danger" onclick="deleteKey(\'' + k.code + '\')" style="margin-left:4px">删除</button>';
 
         html += '<tr>' +
             '<td><span class="key-code">' + k.code + '</span></td>' +
@@ -478,6 +479,17 @@ async function disableKey(code) {
         body: JSON.stringify({ key: code })
     });
     showToast('已禁用 ' + code);
+    loadData();
+}
+
+async function deleteKey(code) {
+    if (!confirm('确定删除 ' + code + '？此操作不可恢复')) return;
+    await fetch(API_BASE + '/api/admin/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: code })
+    });
+    showToast('已删除 ' + code);
     loadData();
 }
 
