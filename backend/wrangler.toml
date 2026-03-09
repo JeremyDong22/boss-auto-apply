@@ -1,0 +1,11 @@
+# wrangler.toml - v1
+# Boss 自动投递 - 后端 Worker 配置
+
+name = "boss-auto-apply-api"
+main = "_worker.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "boss-license-db"
+database_id = "741596d0-1cdd-4969-b336-c64a605472eb"

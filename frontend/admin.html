@@ -317,7 +317,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
-var API_BASE = (location.port === '3456') ? '' : 'http://localhost:3456';
+var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://localhost:3456'
+    : 'https://boss-auto-apply-api.hengd2.workers.dev';
 
 function showToast(msg) {
     var t = document.getElementById('toast');
