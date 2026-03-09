@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- index.html - v2 -->
+<!-- Boss自动投递助手 - 卡密激活页（不再使用 AES 加密，改为服务端验证） -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boss自动投递助手</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+  }
+
+  /* 卡密输入页 */
+  .lock-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .lock-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 48px 40px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .lock-card h1 {
+    font-size: 24px;
+    color: #00bebd;
+    margin-bottom: 8px;
+  }
+  .lock-card .subtitle {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+  .lock-card input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 17px;
+    font-family: monospace;
+    letter-spacing: 1px;
+    outline: none;
+    text-align: center;
+    text-transform: uppercase;
+    transition: border-color 0.2s;
+  }
+  .lock-card input:focus { border-color: #00bebd; }
+  .lock-card input::placeholder {
+    font-family: -apple-system, sans-serif;
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 15px;
+  }
+  .activate-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    background: linear-gradient(135deg, #00bebd, #00a8a7);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .activate-btn:hover { opacity: 0.9; }
+  .activate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .error-msg {
+    color: #e74c3c;
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  /* 内容页 */
+  .content-screen { display: none; }
+  .content-screen.visible { display: block; }
+  .header {
+    background: linear-gradient(135deg, #00bebd, #00a8a7);
+    color: #fff;
+    padding: 32px 20px;
+    text-align: center;
+  }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header p { font-size: 14px; opacity: 0.85; margin-top: 6px; }
+  .main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+  .section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  }
+  .section h2 {
+    font-size: 18px;
+    color: #00bebd;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .section p { line-height: 1.7; font-size: 14px; }
+  .section ul { padding-left: 20px; line-height: 2; font-size: 14px; }
+  .section a { color: #00bebd; text-decoration: none; }
+  .section a:hover { text-decoration: underline; }
+  .note { color: #999; font-size: 12px; margin-top: 10px; }
+
+  /* 卡密状态卡片 */
+  .key-status {
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .status-item {
+    flex: 1;
+    min-width: 100px;
+    background: #f8fffe;
+    border: 1px solid #e0f5f5;
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .status-item .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+  .status-item .value { font-size: 20px; font-weight: 700; color: #00bebd; }
+  .status-item .value.warn { color: #e67e22; }
+  .status-item .value.danger { color: #e74c3c; }
+
+  /* 使用步骤 */
+  .steps { display: flex; flex-direction: column; gap: 16px; }
+  .step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    background: #00bebd;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .step strong { font-size: 15px; }
+  .step p { font-size: 13px; color: #666; margin-top: 4px; line-height: 1.6; }
+
+  /* 拖拽区域 */
+  .drag-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0 8px;
+  }
+  .drag-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #00bebd, #00a8a7);
+    color: #fff !important;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none !important;
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0,190,189,0.3);
+    transition: box-shadow 0.2s;
+    white-space: nowrap;
+  }
+  .drag-btn:hover { box-shadow: 0 4px 16px rgba(0,190,189,0.4); }
+  .drag-btn:active { cursor: grabbing; }
+  .drag-hint { color: #999; font-size: 13px; }
+
+  /* 兼容性折叠 */
+  .browser-details { margin-top: 8px; }
+  .browser-details summary {
+    color: #00bebd;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    outline: none;
+    user-select: none;
+  }
+  .browser-details summary:hover { text-decoration: underline; }
+
+  /* 兼容性表格 */
+  .compat-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  .compat-table th, .compat-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .compat-table th { color: #999; font-weight: 500; font-size: 12px; }
+  .yes { color: #27ae60; font-weight: 600; }
+
+  /* 页脚 */
+  .footer {
+    text-align: center;
+    color: #bbb;
+    font-size: 12px;
+    padding: 16px 0 8px;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: #333;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 9999;
+    transition: transform 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 480px) {
+    .lock-card { padding: 32px 24px; }
+    .main { padding: 16px 12px 40px; }
+    .section { padding: 18px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 卡密输入界面 -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card">
+    <h1>Boss自动投递助手</h1>
+    <p class="subtitle">请输入您的卡密激活使用</p>
+    <input type="text" id="keyInput" placeholder="输入卡密，如 BOSS-XXXX-XXXX" autofocus
+           maxlength="14" autocomplete="off" spellcheck="false">
+    <button class="activate-btn" id="activateBtn">激活</button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+</div>
+
+<!-- 激活后的内容界面 -->
+<div class="content-screen" id="contentScreen">
+  <div class="header">
+    <h1>Boss自动投递助手</h1>
+    <p>一键批量投递 Boss直聘 职位</p>
+  </div>
+  <div class="main">
+
+    <!-- 卡密状态 -->
+    <div class="section">
+      <h2>卡密状态</h2>
+      <div class="key-status">
+        <div class="status-item">
+          <div class="label">卡密</div>
+          <div class="value" id="displayKey" style="font-size:14px;font-family:monospace">-</div>
+        </div>
+        <div class="status-item">
+          <div class="label">剩余天数</div>
+          <div class="value" id="displayDays">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 获取书签 -->
+    <div class="section">
+      <h2>获取书签</h2>
+      <p>将下方按钮<b>拖拽</b>到浏览器书签栏即可完成安装。每次在 Boss直聘 页面点击此书签即可自动投递。</p>
+      <div class="drag-area">
+        <a id="dragLink" class="drag-btn" href="#">Boss自动投递</a>
+        <span class="drag-hint">&larr; 拖我到书签栏</span>
+      </div>
+      <p class="note">如果看不到书签栏，按 Ctrl+Shift+B（Mac: Cmd+Shift+B）显示。</p>
+    </div>
+
+    <!-- 使用步骤 -->
+    <div class="section">
+      <h2>使用步骤</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">1</span>
+          <div>
+            <strong>确认浏览器</strong>
+            <p>请使用 Chrome、Edge、360、QQ、搜狗等 Chromium 内核浏览器。</p>
+            <details class="browser-details">
+              <summary>查看支持的浏览器列表</summary>
+              <table class="compat-table">
+                <tr><th>浏览器</th><th>支持</th><th>备注</th></tr>
+                <tr><td>Chrome</td><td class="yes">支持</td><td>推荐</td></tr>
+                <tr><td>Edge</td><td class="yes">支持</td><td></td></tr>
+                <tr><td>360浏览器</td><td class="yes">支持</td><td>极速模式</td></tr>
+                <tr><td>QQ浏览器</td><td class="yes">支持</td><td></td></tr>
+                <tr><td>搜狗浏览器</td><td class="yes">支持</td><td></td></tr>
+                <tr><td>Firefox</td><td class="yes">支持</td><td></td></tr>
+              </table>
+            </details>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">2</span>
+          <div>
+            <strong>打开Boss直聘</strong>
+            <p>进入 <a href="https://www.zhipin.com/web/geek/jobs" target="_blank" rel="noopener">Boss直聘职位列表页</a>，筛选好目标条件（城市、职位、薪资等）。</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <div>
+            <strong>点击书签，开始投递</strong>
+            <p>点击书签栏中的「Boss自动投递」，页面右上角出现控制面板后，点「开始投递」即可。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 注意事项 -->
+    <div class="section">
+      <h2>注意事项</h2>
+      <ul>
+        <li>Boss直聘每日沟通上限为 <b>150 人</b>，达到后工具自动停止。</li>
+        <li>投递过程中可随时点面板上的「停止」暂停。</li>
+        <li>已沟通过的职位会自动跳过，不会重复投递。</li>
+        <li>请先在Boss直聘上完善简历，确保简历内容完整。</li>
+        <li>书签与您的卡密绑定，请勿分享给他人。</li>
+      </ul>
+    </div>
+
+    <div class="footer">Boss自动投递助手</div>
+  </div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- 配置 ----
+// 自动检测：如果通过后端服务器访问（localhost:3456），用当前域名；否则用 localhost
+var API_BASE = (location.port === '3456') ? '' : 'http://localhost:3456';
+
+// ---- 工具函数 ----
+
+function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2500);
+}
+
+function showError(msg) {
+    var el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
+function hideError() {
+    document.getElementById('errorMsg').style.display = 'none';
+}
+
+// 生成加载器 bookmarklet：bake 卡密和 API 地址进去
+function buildLoaderBookmarklet(keyCode) {
+    // 设备指纹：屏幕+语言+时区+平台 的组合 hash
+    // 这段代码会在 zhipin.com 上执行，收集当前浏览器的指纹
+    return "javascript:void(function(){" +
+        "var k='" + keyCode + "';" +
+        "var api='" + API_BASE + "';" +
+        "var fp=btoa(screen.width+'|'+screen.height+'|'+screen.colorDepth+'|'+navigator.language+'|'+new Date().getTimezoneOffset()+'|'+navigator.platform);" +
+        "fetch(api+'/api/verify?key='+k+'&fp='+encodeURIComponent(fp))" +
+        ".then(function(r){return r.json()})" +
+        ".then(function(d){" +
+            "if(!d.ok){alert('Boss\\u81ea\\u52a8\\u6295\\u9012: '+d.msg);return}" +
+            "var s=document.createElement('script');" +
+            "s.textContent=d.code;" +
+            "document.head.appendChild(s)" +
+        "})" +
+        ".catch(function(e){alert('\\u8fde\\u63a5\\u670d\\u52a1\\u5668\\u5931\\u8d25: '+e.message)})" +
+    "}())";
+}
+
+// ---- 激活流程 ----
+
+async function activate() {
+    var keyInput = document.getElementById('keyInput');
+    var keyCode = keyInput.value.trim().toUpperCase();
+    hideError();
+
+    if (!keyCode) {
+        showError('请输入卡密');
+        return;
+    }
+
+    var btn = document.getElementById('activateBtn');
+    btn.disabled = true;
+    btn.textContent = '验证中...';
+
+    try {
+        var res = await fetch(API_BASE + '/api/check?key=' + encodeURIComponent(keyCode));
+        var data = await res.json();
+
+        if (!data.ok) {
+            showError(data.msg);
+            // 被锁定时禁用输入，倒计时后恢复
+            if (data.blocked) {
+                keyInput.disabled = true;
+                btn.textContent = '已锁定';
+                // 60秒后恢复输入（实际锁定由后端控制）
+                setTimeout(function() {
+                    keyInput.disabled = false;
+                    btn.disabled = false;
+                    btn.textContent = '激活';
+                    hideError();
+                }, 60000);
+                return;
+            }
+            btn.disabled = false;
+            btn.textContent = '激活';
+            return;
+        }
+
+        // 验证通过，显示内容页
+        document.getElementById('lockScreen').style.display = 'none';
+        document.getElementById('contentScreen').classList.add('visible');
+
+        // 填充状态信息
+        document.getElementById('displayKey').textContent = keyCode;
+
+        var daysEl = document.getElementById('displayDays');
+        daysEl.textContent = data.info.remain_days + '天';
+        if (data.info.remain_days <= 3) daysEl.classList.add('danger');
+        else if (data.info.remain_days <= 7) daysEl.classList.add('warn');
+
+        // 生成个性化书签
+        document.getElementById('dragLink').href = buildLoaderBookmarklet(keyCode);
+
+        showToast('卡密验证成功');
+    } catch (e) {
+        showError('无法连接服务器，请检查网络');
+        btn.disabled = false;
+        btn.textContent = '激活';
+    }
+}
+
+// ---- 事件绑定 ----
+
+document.getElementById('activateBtn').addEventListener('click', activate);
+document.getElementById('keyInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') activate();
+});
+
+// 自动格式化卡密输入（加横杠）
+document.getElementById('keyInput').addEventListener('input', function () {
+    var v = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (v.length > 4 && v.indexOf('-') === -1) {
+        // 自动加 BOSS- 前缀格式
+        if (v.startsWith('BOSS')) {
+            v = v.slice(0, 4) + '-' + v.slice(4);
+        }
+    }
+    if (v.length > 9 && v.charAt(9) !== '-') {
+        v = v.slice(0, 9) + '-' + v.slice(9);
+    }
+    this.value = v.slice(0, 14);
+});
+</script>
+</body>
+</html>

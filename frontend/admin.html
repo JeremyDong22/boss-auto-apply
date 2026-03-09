@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- admin.html - v1 -->
+<!-- Boss自动投递助手 - 管理员后台（卡密管理 + 数据概览） -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理后台 - Boss自动投递</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+  }
+
+  /* 顶部导航 */
+  .navbar {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .navbar h1 { font-size: 18px; font-weight: 600; }
+  .navbar .refresh-btn {
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .navbar .refresh-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  /* 统计卡片 */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .stat-card .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+  .stat-card .value { font-size: 24px; font-weight: 700; }
+  .stat-card .value.total { color: #333; }
+  .stat-card .value.active { color: #27ae60; }
+  .stat-card .value.inactive { color: #3498db; }
+  .stat-card .value.expired { color: #e67e22; }
+  .stat-card .value.disabled { color: #e74c3c; }
+
+  /* 生成卡密区 */
+  .generate-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .generate-section h2 {
+    font-size: 16px;
+    color: #1a1a2e;
+    margin-bottom: 14px;
+  }
+  .generate-form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .form-group label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+  }
+  .form-group input, .form-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100px;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: #1a1a2e; }
+  .generate-btn {
+    padding: 8px 20px;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    height: 36px;
+  }
+  .generate-btn:hover { background: #16213e; }
+
+  /* 生成结果 */
+  .generated-result {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #f0faf0;
+    border: 1px solid #c3e6c3;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.8;
+    display: none;
+  }
+  .generated-result .copy-all {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* 卡密表格 */
+  .keys-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .keys-section h2 {
+    font-size: 16px;
+    color: #1a1a2e;
+    margin-bottom: 14px;
+  }
+  .keys-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .keys-table th {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 2px solid #eee;
+    color: #999;
+    font-weight: 500;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .keys-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f5f5f5;
+    vertical-align: top;
+  }
+  .keys-table tr:hover td { background: #fafafa; }
+
+  /* 卡密代码样式 */
+  .key-code {
+    font-family: monospace;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  /* 状态标签 */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge.active { background: #e8f5e9; color: #27ae60; }
+  .badge.inactive { background: #e3f2fd; color: #1976d2; }
+  .badge.expired { background: #fff3e0; color: #e65100; }
+  .badge.disabled { background: #fce4ec; color: #c62828; }
+
+  /* 设备列表 */
+  .device-list {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.6;
+  }
+  .device-item {
+    padding: 2px 0;
+  }
+  .device-fp {
+    font-family: monospace;
+    font-size: 10px;
+    color: #aaa;
+  }
+
+  /* 操作按钮 */
+  .action-btn {
+    padding: 3px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .action-btn:hover { background: #f5f5f5; }
+  .action-btn.danger { color: #e74c3c; border-color: #f5c6cb; }
+  .action-btn.danger:hover { background: #fef0f0; }
+  .action-btn.success { color: #27ae60; border-color: #c3e6c3; }
+  .action-btn.success:hover { background: #f0faf0; }
+
+  /* 空状态 */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: 14px;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: #333;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 9999;
+    transition: transform 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 640px) {
+    .container { padding: 16px 12px; }
+    .generate-form { flex-direction: column; align-items: stretch; }
+    .form-group input { width: 100%; }
+    .keys-table { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <h1>Boss自动投递 - 管理后台</h1>
+  <button class="refresh-btn" onclick="loadData()">刷新数据</button>
+</div>
+
+<div class="container">
+
+  <!-- 统计概览 -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="label">总卡密数</div><div class="value total" id="statTotal">-</div></div>
+    <div class="stat-card"><div class="label">使用中</div><div class="value active" id="statActive">-</div></div>
+    <div class="stat-card"><div class="label">未激活</div><div class="value inactive" id="statInactive">-</div></div>
+    <div class="stat-card"><div class="label">已过期</div><div class="value expired" id="statExpired">-</div></div>
+    <div class="stat-card"><div class="label">已禁用</div><div class="value disabled" id="statDisabled">-</div></div>
+  </div>
+
+  <!-- 生成卡密 -->
+  <div class="generate-section">
+    <h2>生成卡密</h2>
+    <div class="generate-form">
+      <div class="form-group">
+        <label>有效天数</label>
+        <input type="number" id="genDays" value="30" min="1" max="365">
+      </div>
+      <div class="form-group">
+        <label>设备上限</label>
+        <input type="number" id="genDevices" value="2" min="1" max="10">
+      </div>
+      <div class="form-group">
+        <label>生成数量</label>
+        <input type="number" id="genCount" value="1" min="1" max="100">
+      </div>
+      <button class="generate-btn" onclick="generateKeys()">生成</button>
+    </div>
+    <div class="generated-result" id="genResult"></div>
+  </div>
+
+  <!-- 被锁定的 IP -->
+  <div class="keys-section" id="blockedSection" style="margin-bottom:24px;display:none">
+    <h2>被锁定的 IP</h2>
+    <div id="blockedContainer"></div>
+  </div>
+
+  <!-- 卡密列表 -->
+  <div class="keys-section">
+    <h2>卡密列表</h2>
+    <div id="keysTableContainer">
+      <div class="empty-state">加载中...</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var API_BASE = (location.port === '3456') ? '' : 'http://localhost:3456';
+
+function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2000);
+}
+
+// 格式化日期
+function fmtDate(iso) {
+    if (!iso) return '-';
+    var d = new Date(iso);
+    return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0') + ' ' +
+        String(d.getHours()).padStart(2, '0') + ':' +
+        String(d.getMinutes()).padStart(2, '0');
+}
+
+// 解码指纹为可读格式
+function decodeFp(fp) {
+    try {
+        var decoded = atob(fp);
+        var parts = decoded.split('|');
+        // 格式: 宽|高|色深|语言|时区偏移|平台
+        if (parts.length >= 4) {
+            return parts[0] + 'x' + parts[1] + ' ' + parts[3] + ' ' + (parts[5] || '');
+        }
+        return decoded.slice(0, 30);
+    } catch(e) {
+        return fp.slice(0, 20) + '...';
+    }
+}
+
+// 加载数据
+async function loadData() {
+    try {
+        var res = await fetch(API_BASE + '/api/admin/keys');
+        var data = await res.json();
+        if (!data.ok) { showToast('加载失败'); return; }
+
+        // 更新统计
+        document.getElementById('statTotal').textContent = data.stats.total;
+        document.getElementById('statActive').textContent = data.stats.active;
+        document.getElementById('statInactive').textContent = data.stats.inactive;
+        document.getElementById('statExpired').textContent = data.stats.expired;
+        document.getElementById('statDisabled').textContent = data.stats.disabled;
+
+        // 渲染表格
+        renderTable(data.keys);
+        loadBlocked();
+    } catch(e) {
+        document.getElementById('keysTableContainer').innerHTML =
+            '<div class="empty-state">无法连接服务器 (' + e.message + ')</div>';
+    }
+}
+
+function renderTable(keys) {
+    var container = document.getElementById('keysTableContainer');
+
+    if (keys.length === 0) {
+        container.innerHTML = '<div class="empty-state">暂无卡密，点击上方「生成」创建</div>';
+        return;
+    }
+
+    // 按创建时间倒序
+    keys.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+
+    var html = '<table class="keys-table">' +
+        '<thead><tr>' +
+        '<th>卡密</th><th>状态</th><th>有效期</th><th>设备</th><th>激活时间</th><th>操作</th>' +
+        '</tr></thead><tbody>';
+
+    keys.forEach(function(k) {
+        // 状态标签
+        var badge = '<span class="badge ' + k.status + '">' + k.status_label + '</span>';
+
+        // 设备列表
+        var devicesHtml = '';
+        if (k.devices.length === 0) {
+            devicesHtml = '<span style="color:#ccc">无</span>';
+        } else {
+            devicesHtml = '<div class="device-list">';
+            k.devices.forEach(function(d, i) {
+                devicesHtml += '<div class="device-item">' +
+                    '设备' + (i + 1) + ': ' + decodeFp(d.fingerprint) +
+                    '<br><span class="device-fp">最近: ' + fmtDate(d.last_seen) + '</span>' +
+                    '</div>';
+            });
+            devicesHtml += '</div>';
+        }
+
+        // 操作按钮
+        var actionHtml;
+        if (k.disabled) {
+            actionHtml = '<button class="action-btn success" onclick="enableKey(\'' + k.code + '\')">启用</button>';
+        } else {
+            actionHtml = '<button class="action-btn danger" onclick="disableKey(\'' + k.code + '\')">禁用</button>';
+        }
+
+        html += '<tr>' +
+            '<td><span class="key-code">' + k.code + '</span></td>' +
+            '<td>' + badge + '</td>' +
+            '<td>' + k.days + '天</td>' +
+            '<td>' + k.devices.length + '/' + k.max_devices + ' ' + devicesHtml + '</td>' +
+            '<td>' + fmtDate(k.activated_at) + '</td>' +
+            '<td>' + actionHtml + '</td>' +
+            '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// 生成卡密
+async function generateKeys() {
+    var days = parseInt(document.getElementById('genDays').value) || 30;
+    var maxDevices = parseInt(document.getElementById('genDevices').value) || 2;
+    var count = parseInt(document.getElementById('genCount').value) || 1;
+
+    try {
+        var res = await fetch(API_BASE + '/api/admin/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days: days, max_devices: maxDevices, count: count })
+        });
+        var data = await res.json();
+        if (!data.ok) { showToast('生成失败'); return; }
+
+        // 显示结果
+        var el = document.getElementById('genResult');
+        el.style.display = 'block';
+        el.innerHTML = data.generated.join('<br>') +
+            '<br><button class="copy-all" onclick="copyKeys()">复制全部</button>';
+        el.dataset.keys = data.generated.join('\n');
+
+        showToast('已生成 ' + data.generated.length + ' 个卡密');
+        loadData(); // 刷新表格
+    } catch(e) {
+        showToast('请求失败: ' + e.message);
+    }
+}
+
+function copyKeys() {
+    var text = document.getElementById('genResult').dataset.keys;
+    navigator.clipboard.writeText(text).then(function() {
+        showToast('已复制到剪贴板');
+    });
+}
+
+// 禁用/启用卡密
+async function disableKey(code) {
+    await fetch(API_BASE + '/api/admin/disable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: code })
+    });
+    showToast('已禁用 ' + code);
+    loadData();
+}
+
+async function enableKey(code) {
+    await fetch(API_BASE + '/api/admin/enable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: code })
+    });
+    showToast('已启用 ' + code);
+    loadData();
+}
+
+// 加载被锁定的 IP
+async function loadBlocked() {
+    try {
+        var res = await fetch(API_BASE + '/api/admin/blocked');
+        var data = await res.json();
+        var section = document.getElementById('blockedSection');
+        var container = document.getElementById('blockedContainer');
+
+        if (!data.ok || data.blocked.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        var html = '<table class="keys-table"><thead><tr><th>IP 地址</th><th>失败次数</th><th>剩余锁定</th><th>操作</th></tr></thead><tbody>';
+        data.blocked.forEach(function(b) {
+            html += '<tr>' +
+                '<td><code>' + b.ip + '</code></td>' +
+                '<td>' + b.failures + ' 次</td>' +
+                '<td>' + b.remain_min + ' 分钟</td>' +
+                '<td><button class="action-btn success" onclick="unblockIP(\'' + b.ip + '\')">解锁</button></td>' +
+                '</tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    } catch(e) {}
+}
+
+async function unblockIP(ip) {
+    await fetch(API_BASE + '/api/admin/unblock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip: ip })
+    });
+    showToast('已解锁 ' + ip);
+    loadBlocked();
+}
+
+// 初始加载
+loadData();
+loadBlocked();
+</script>
+</body>
+</html>
