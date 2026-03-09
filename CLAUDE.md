@@ -5,46 +5,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 项目概述
 Boss 直聘（zhipin.com）自动投递简历工具。核心是一个 Bookmarklet（当前 v10），注入到职位列表页后自动遍历卡片、点击"立即沟通"、关闭弹窗，实现批量投递。通过卡密授权系统分发给客户。
 
+## 线上环境
+
+| 服务 | URL | 类型 |
+|------|-----|------|
+| 前端（客户页） | https://boss-auto-apply-website.pages.dev/ | Cloudflare Pages |
+| 前端（管理后台） | https://boss-auto-apply-website.pages.dev/admin.html | Cloudflare Pages |
+| 后端 API | https://boss-auto-apply-api.hengd2.workers.dev | Cloudflare Worker |
+| 数据库 | boss-license-db (741596d0-1cdd-4969-b336-c64a605472eb) | Cloudflare D1 |
+| GitHub | https://github.com/JeremyDong22/boss-auto-apply (private) | |
+
 ## 架构
 
 ```
-bookmarklet_auto_apply_v10.js   ← 核心脚本（压缩版 + 可读版在同一文件）
+bookmarklet_auto_apply_v10.js   ← 核心投递脚本（压缩版 + 可读版在同一文件）
 backend/
-  license_server.js             ← Node.js 卡密验证服务器（端口 3456）
-  manage_keys.js                ← 卡密管理 CLI 工具
-  keys.json                     ← 卡密数据存储
+  worker-source.js              ← Cloudflare Worker 源码（生产环境）
+  build.js                      ← 构建脚本：注入 v10 代码到 worker，输出 _worker.js
+  wrangler.toml                 ← Worker 部署配置（D1 绑定）
+  schema.sql                    ← D1 数据库表结构
+  license_server.js             ← Node.js 本地开发服务器（端口 3456）
+  manage_keys.js                ← 本地卡密管理 CLI 工具
+  keys.json                     ← 本地开发数据（gitignored）
+  _worker.js                    ← 构建产物（gitignored）
 frontend/
   index.html                    ← 客户端：卡密输入 → 验证 → 获取 bookmarklet
   admin.html                    ← 管理后台：卡密管理 + 数据概览
 archive/                        ← 历史版本和废弃文件
-  bookmarklet_auto_apply_v7~v9.js
-  bookmarklet_grab_*.js         ← DOM 抓取辅助工具
-  local_license_server.js       ← 早期单卡密测试服务器
-  website_v1_build.js           ← v1 静态加密方案（已废弃）
 ```
 
 ## 常用命令
 
 ```bash
-# 启动卡密验证服务器（本地开发）
-node backend/license_server.js
+# ---- 本地开发 ----
+node backend/license_server.js                                # 启动本地服务器（端口 3456）
+node backend/manage_keys.js generate                          # 生成卡密（本地）
+node backend/manage_keys.js generate --days 7 --devices 3 --count 10
+node backend/manage_keys.js list                              # 列出卡密（本地）
 
-# 卡密管理
-node backend/manage_keys.js generate                          # 生成 1 个卡密（默认30天/2设备）
-node backend/manage_keys.js generate --days 7 --devices 3 --count 10  # 批量生成
-node backend/manage_keys.js list                              # 列出所有卡密
-node backend/manage_keys.js info BOSS-XXXX-XXXX               # 查看详情
-node backend/manage_keys.js disable BOSS-XXXX-XXXX            # 禁用
-node backend/manage_keys.js enable BOSS-XXXX-XXXX             # 启用
+# ---- 生产部署 ----
+cd backend && node build.js && wrangler deploy                # 构建并部署后端 Worker
+wrangler pages deploy frontend/ --project-name=boss-auto-apply-website  # 部署前端
+wrangler d1 execute boss-license-db --remote --file=backend/schema.sql  # 初始化 D1 表结构
 ```
 
 ## 关键流程
 
 ### 授权流程
-1. 管理员用 `manage_keys.js` 生成卡密
-2. 客户在 `index.html` 输入卡密 → 请求 `license_server.js` 的 `/api/verify` 验证
-3. 验证通过 → 服务器返回 bookmarklet 可读版源码（从 v10.js 提取 IIFE 部分）
-4. 前端将源码包装成 `javascript:void(...)` 格式显示给用户拖拽到书签栏
+1. 管理员在 admin.html 或用 `manage_keys.js` 生成卡密
+2. 客户在 index.html 输入卡密 → 前端请求 `/api/check` 验证
+3. 验证通过 → 前端生成个性化 loader bookmarklet（卡密 bake 在 href 里）
+4. 客户拖拽书签到书签栏
+5. 在 zhipin.com 点击书签 → bookmarklet 请求 `/api/verify`（带卡密+设备指纹）
+6. 后端验证卡密+过期+设备数 → 返回 v10 投递代码 → 浏览器执行
 
 ### 投递流程（Bookmarklet 在 Boss 页面内执行）
 1. 点击左侧职位卡片（`.job-card-wrap`） → 右侧展开详情
@@ -82,13 +95,20 @@ node backend/manage_keys.js enable BOSS-XXXX-XXXX             # 启用
 ### Bookmarklet 修改
 - v10.js 文件结构：前 5 行是注释 + 压缩版（一行），后面是可读版源码
 - 修改可读版后，需要同步更新压缩版（第 5 行）
-- 服务器提取的是可读版（从 `(function () {` 开始到文件末尾）
+- Worker 通过 build.js 从 v10.js 提取可读版（从 `(function () {` 开始到文件末尾）
+- **修改 v10 后需要重新部署后端**：`cd backend && node build.js && wrangler deploy`
 
 ### 卡密系统
 - 卡密格式：`BOSS-XXXX-XXXX`（去掉易混淆字符 I/O/0/1）
 - 防暴力破解：IP 级别，阶梯锁定（5次→15分钟，10次→1小时，20次→24小时）
-- 设备绑定：通过 fingerprint 限制同时使用设备数
-- 数据存储在 `keys.json`（内存 + 文件，重启不丢数据，但 IP 锁定记录仅内存）
+- 设备绑定：通过 fingerprint（屏幕+语言+时区+平台 hash）限制同时使用设备数
+- 生产数据存储在 D1（boss-license-db），本地开发用 keys.json
+
+### 部署架构
+- 前端：Cloudflare Pages（boss-auto-apply-website），静态 HTML
+- 后端：Cloudflare Worker（boss-auto-apply-api），绑定 D1 数据库
+- 前端 `API_BASE` 自动检测：localhost 走本地，生产走 Workers URL
+- 后端 Worker 无状态，所有数据（卡密、设备、限流）持久化在 D1
 
 ### 已弃用方案
 - CDP/MCP 方案：Boss 检测 CDP → 关页面
