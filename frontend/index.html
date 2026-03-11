@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- index.html - v5 - 超薄 loader 重构，书签仅 ~120 字符，UI 从服务器拉取 -->
-<!-- Boss自动投递助手 - 产品落地页（介绍 + 安装书签 + 获取卡密） -->
+<!-- index.html - v6 - ClawBoss 拟人化版本 -->
+<!-- ClawBoss - 你的求职小助手 -->
 <!-- 卡密输入在书签 app 内完成，网站不需要输入卡密 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Boss自动投递助手 - 一键批量投递</title>
+<title>ClawBoss - 约面交给我，你赶紧去学习</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -192,61 +192,44 @@
 
 <!-- Hero -->
 <div class="hero">
-  <h1>Boss自动投递助手</h1>
-  <p>一键批量投递 Boss直聘 职位，自动遍历、自动沟通、自动翻页，省时省力找工作</p>
+  <h1>ClawBoss</h1>
+  <p>约面交给我，你赶紧去学习</p>
 </div>
 
 <div class="main">
 
-  <!-- How it works -->
-  <div class="how-cards">
-    <div class="how-card">
-      <div class="num">1</div>
-      <h3>安装书签</h3>
-      <p>拖拽按钮到书签栏<br>一次安装永久使用</p>
-    </div>
-    <div class="how-card">
-      <div class="num">2</div>
-      <h3>输入卡密</h3>
-      <p>点击书签后输入卡密<br>在面板中一键激活</p>
-    </div>
-    <div class="how-card">
-      <div class="num">3</div>
-      <h3>自动投递</h3>
-      <p>点击开始自动投递<br>坐等 BOSS 回复</p>
-    </div>
-  </div>
+  <!-- How it works -->\n  <div class=\"how-cards\">\n    <div class=\"how-card\">\n      <div class=\"num\">1</div>\n      <h3>把我装进书签</h3>\n      <p>拖拽按钮到书签栏<br>我就住进你浏览器了</p>\n    </div>\n    <div class=\"how-card\">\n      <div class=\"num\">2</div>\n      <h3>给我看卡密</h3>\n      <p>点击书签后输入卡密<br>我就知道你是谁了</p>\n    </div>\n    <div class=\"how-card\">\n      <div class=\"num\">3</div>\n      <h3>我帮你约面</h3>\n      <p>点击开始我就出发<br>你去学习等消息</p>\n    </div>\n  </div>
 
   <!-- Install -->
   <div class="section">
-    <h2>安装书签</h2>
-    <p>将下方按钮<b>拖拽</b>到浏览器书签栏即可完成安装。书签是通用的，卡密在使用时输入。</p>
+    <h2>把我装进书签栏</h2>
+    <p>把下面这个按钮<b>拖</b>到浏览器书签栏，我就住进去了。卡密等会儿用的时候再给我看。</p>
     <div class="drag-area">
-      <a id="dragLink" class="drag-btn" href="#" draggable="true">Boss自动投递</a>
+      <a id="dragLink" class="drag-btn" href="#" draggable="true">ClawBoss</a>
       <span class="drag-hint">&larr; 拖我到书签栏</span>
     </div>
-    <p class="note">如果看不到书签栏，按 Ctrl+Shift+B（Mac: Cmd+Shift+B）显示。</p>
+    <p class="note">看不到书签栏？按 Ctrl+Shift+B（Mac: Cmd+Shift+B）就出来了。</p>
   </div>
 
   <!-- Steps -->
   <div class="section">
-    <h2>使用步骤</h2>
+    <h2>怎么用我</h2>
     <div class="steps">
       <div class="step">
         <span class="step-num">1</span>
         <div>
           <strong>确认浏览器</strong>
-          <p>请使用 Chrome、Edge、360、QQ、搜狗等 Chromium 内核浏览器。</p>
+          <p>我只能在 Chrome、Edge、360、QQ、搜狗这些浏览器里工作。</p>
           <details class="browser-details">
-            <summary>查看支持的浏览器列表</summary>
+            <summary>看看我支持哪些浏览器</summary>
             <table class="compat-table">
-              <tr><th>浏览器</th><th>支持</th><th>备注</th></tr>
-              <tr><td>Chrome</td><td class="yes">支持</td><td>推荐</td></tr>
-              <tr><td>Edge</td><td class="yes">支持</td><td></td></tr>
-              <tr><td>360浏览器</td><td class="yes">支持</td><td>极速模式</td></tr>
-              <tr><td>QQ浏览器</td><td class="yes">支持</td><td></td></tr>
-              <tr><td>搜狗浏览器</td><td class="yes">支持</td><td></td></tr>
-              <tr><td>Firefox</td><td class="yes">支持</td><td></td></tr>
+              <tr><th>浏览器</th><th>能用吗</th><th>备注</th></tr>
+              <tr><td>Chrome</td><td class="yes">能用</td><td>推荐</td></tr>
+              <tr><td>Edge</td><td class="yes">能用</td><td></td></tr>
+              <tr><td>360浏览器</td><td class="yes">能用</td><td>极速模式</td></tr>
+              <tr><td>QQ浏览器</td><td class="yes">能用</td><td></td></tr>
+              <tr><td>搜狗浏览器</td><td class="yes">能用</td><td></td></tr>
+              <tr><td>Firefox</td><td class="yes">能用</td><td></td></tr>
             </table>
           </details>
         </div>
@@ -255,21 +238,21 @@
         <span class="step-num">2</span>
         <div>
           <strong>打开 Boss直聘</strong>
-          <p>进入 <a href="https://www.zhipin.com/web/geek/jobs" target="_blank" rel="noopener">Boss直聘职位列表页</a>，筛选好目标条件（城市、职位、薪资等）。</p>
+          <p>去 <a href="https://www.zhipin.com/web/geek/jobs" target="_blank" rel="noopener">Boss直聘职位列表页</a>，先筛选好你想要的职位（城市、岗位、薪资这些）。</p>
         </div>
       </div>
       <div class="step">
         <span class="step-num">3</span>
         <div>
-          <strong>点击书签，输入卡密</strong>
-          <p>点击书签栏中的「Boss自动投递」，首次使用会弹出卡密输入框，输入后自动激活。卡密会自动记住，下次无需重复输入。</p>
+          <strong>点我，给我看卡密</strong>
+          <p>点书签栏里的「ClawBoss」，第一次用会问你要卡密，输进去就行。我会记住的，下次不用再输。</p>
         </div>
       </div>
       <div class="step">
         <span class="step-num">4</span>
         <div>
-          <strong>开始投递</strong>
-          <p>面板出现后点「开始投递」即可。面板上可查看卡密状态、剩余天数，也可以随时更换卡密。</p>
+          <strong>让我开始干活</strong>
+          <p>面板出来后点「开始」，我就去帮你约面了。你可以看到卡密还能用几天，也可以随时换新卡密。</p>
         </div>
       </div>
     </div>
@@ -277,8 +260,8 @@
 
   <!-- Pricing -->
   <div class="section">
-    <h2>获取卡密</h2>
-    <p>购买卡密后，在 Boss直聘 页面点击书签输入即可使用。</p>
+    <h2>买张卡密</h2>
+    <p>买了卡密，在 Boss直聘 页面点我，输入卡密就能用了。</p>
     <div class="pricing-cards" id="pricingCards">
       <!-- 从后端动态加载 -->
       <div style="text-align:center;color:#999;font-size:13px;padding:20px 0">加载定价中...</div>
@@ -286,7 +269,7 @@
     <!-- 联系方式（从后端动态加载） -->
     <div id="contactArea" style="margin-top:18px;text-align:center;display:none">
       <div style="width:100%;height:1px;background:#f0f0f0;margin-bottom:14px"></div>
-      <p style="font-size:14px;color:#666;margin-bottom:10px">添加微信购买卡密：</p>
+      <p style="font-size:14px;color:#666;margin-bottom:10px">加微信买卡密：</p>
       <p id="contactWechatId" style="font-size:18px;font-weight:700;color:#00bebd;font-family:monospace;letter-spacing:1px;margin-bottom:10px"></p>
       <img id="contactQrcode" style="max-width:200px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);display:none" alt="微信二维码">
     </div>
@@ -294,17 +277,17 @@
 
   <!-- Notes -->
   <div class="section">
-    <h2>注意事项</h2>
+    <h2>用我之前要知道</h2>
     <ul>
-      <li>Boss直聘每日沟通有上限，达到后工具自动停止。</li>
-      <li>投递过程中可随时点面板上的「停止」暂停。</li>
-      <li>已沟通过的职位会自动跳过，不会重复投递。</li>
-      <li>请先在 Boss直聘 上完善简历，确保简历内容完整。</li>
-      <li>卡密与设备绑定，请勿分享给他人。</li>
+      <li>Boss直聘每天能聊的人有上限，到了我就停下来。</li>
+      <li>干活的时候你可以随时点「停止」让我歇会儿。</li>
+      <li>聊过的职位我会跳过，不会重复打招呼。</li>
+      <li>记得先把简历填完整，不然 HR 看不到你的亮点。</li>
+      <li>卡密绑定你的设备，别给别人用哦。</li>
     </ul>
   </div>
 
-  <div class="footer">Boss自动投递助手</div>
+  <div class="footer">ClawBoss - 约面交给我，你赶紧去学习</div>
 </div>
 
 <div id="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:#333;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:9999;transition:transform 0.3s;pointer-events:none"></div>
