@@ -84,7 +84,7 @@
         msgEl.style.color = 'rgba(255,255,255,0.9)';
         msgEl.style.display = 'block';
 
-        var api = window.__BOSS_API || 'https://boss-auto-apply-api.hengd2.workers.dev';
+        var api = window.__BOSS_API || 'https://boss.smartice.ai';
         var fp = btoa(screen.width + '|' + screen.height + '|' + screen.colorDepth + '|' +
             navigator.language + '|' + new Date().getTimezoneOffset() + '|' + navigator.platform);
 
@@ -120,7 +120,7 @@
     async function checkKeyValid() {
         var key = window.__BOSS_KEY || localStorage.getItem('boss_auto_key');
         if (!key) return { valid: false, msg: '未找到卡密' };
-        var api = window.__BOSS_API || 'https://boss-auto-apply-api.hengd2.workers.dev';
+        var api = window.__BOSS_API || 'https://boss.smartice.ai';
         try {
             var res = await fetch(api + '/api/check?key=' + encodeURIComponent(key));
             var data = await res.json();
@@ -189,7 +189,7 @@
         status('⚠ 今日已达150人上限！已投递' + count + '个，跳过' + skipped + '个');
 
         // 上报限流事件到后台
-        var reportApi = window.__BOSS_API || 'https://boss-auto-apply-api.hengd2.workers.dev';
+        var reportApi = window.__BOSS_API || 'https://boss.smartice.ai';
         var reportKey = window.__BOSS_KEY || localStorage.getItem('boss_auto_key') || '';
         if (reportKey) {
             try {
@@ -357,7 +357,7 @@
                 status('已投递 ' + jobName);
 
                 // 静默上报投递记录（sendBeacon 不阻塞、不等响应）
-                var reportApi = window.__BOSS_API || 'https://boss-auto-apply-api.hengd2.workers.dev';
+                var reportApi = window.__BOSS_API || 'https://boss.smartice.ai';
                 var reportKey = window.__BOSS_KEY || localStorage.getItem('boss_auto_key') || '';
                 if (reportKey) {
                     try {

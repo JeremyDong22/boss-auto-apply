@@ -11,7 +11,7 @@ Boss 直聘（zhipin.com）自动投递简历工具。核心是一个 Bookmarkle
 |------|-----|------|
 | 前端（客户页） | https://boss-auto-apply-website.pages.dev/ | Cloudflare Pages |
 | 前端（管理后台） | https://boss-auto-apply-website.pages.dev/admin.html | Cloudflare Pages |
-| 后端 API | https://boss-auto-apply-api.hengd2.workers.dev | Cloudflare Worker |
+| 后端 API | https://boss.smartice.ai（自定义域名，.workers.dev 国内被墙） | Cloudflare Worker |
 | 数据库 | boss-license-db (741596d0-1cdd-4969-b336-c64a605472eb) | Cloudflare D1 |
 | GitHub | https://github.com/JeremyDong22/boss-auto-apply (private) | |
 
