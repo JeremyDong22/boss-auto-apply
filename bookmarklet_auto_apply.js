@@ -7,7 +7,7 @@
 (function () {
     'use strict';
 
-    // v10 计数器：无固定上限，持续投递直到用户停止、到底、或触发限流
+    // 计数器：无固定上限，持续投递直到用户停止、到底、或触发限流
     var count = 0;    // 成功投递数
     var skipped = 0;  // 跳过数（已沟通/无按钮）
     var idx = 0;      // 当前遍历索引
@@ -25,10 +25,11 @@
 
     // 面板 UI：卡密信息 + 三个计数 + 开始/停止 + 换卡密输入框
     panel.innerHTML = `
-        <div style="position:fixed;top:80px;right:20px;z-index:99999;
+        <div id="aa-inner" style="position:fixed;top:80px;right:20px;z-index:99999;
             background:linear-gradient(135deg,#00bebd,#00a8a7);color:white;
             padding:16px 20px;border-radius:12px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;min-width:240px">
+            box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;min-width:240px;
+            transition:background 0.4s ease">
             <div id="aa-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:24px;opacity:0.7;line-height:1">\u00d7</div>
             <div style="font-size:16px;font-weight:bold;margin-bottom:8px">Boss 自动投递 v11</div>
             <div id="aa-key-line" style="font-size:11px;margin-bottom:10px;opacity:0.85">
@@ -54,11 +55,57 @@
                     cursor:pointer;white-space:nowrap">换卡密</button>
             </div>
             <div id="aa-key-msg" style="font-size:11px;margin-top:6px;display:none"></div>
-            <a href="https://boss-auto-apply-website.pages.dev" target="_blank"
+            <a href="https://boss-frontend.preview.aliyun-zeabur.cn" target="_blank"
                 style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">官网 / 购买卡密 / 联系客服</a>
         </div>`;
     document.body.appendChild(panel);
+
+    // 面板颜色控制
+    function setPanelColor(type) {
+        var inner = document.getElementById('aa-inner');
+        if (!inner) return;
+        // 先清除闪烁动画
+        inner.style.animation = '';
+        var keyInput = document.getElementById('aa-new-key');
+        if (keyInput) keyInput.style.animation = '';
+
+        if (type === 'default') {
+            inner.style.background = 'linear-gradient(135deg,#00bebd,#00a8a7)';
+        } else if (type === 'yellow') {
+            inner.style.background = 'linear-gradient(135deg,#f39c12,#e67e22)';
+        } else if (type === 'gray') {
+            inner.style.background = 'linear-gradient(135deg,#7f8c8d,#636e72)';
+            // 换卡密输入框边框缓慢闪烁
+            if (!document.getElementById('aa-blink-style')) {
+                var st = document.createElement('style');
+                st.id = 'aa-blink-style';
+                st.textContent = '@keyframes aa-blink{0%,100%{border-color:rgba(255,255,255,0.3)}50%{border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8)}}';
+                document.head.appendChild(st);
+            }
+            if (keyInput) keyInput.style.animation = 'aa-blink 1.5s ease-in-out infinite';
+        }
+    }
+
+    // 礼花特效（canvas-confetti，按需加载）
+    function fireConfetti() {
+        function launch() {
+            var end = Date.now() + 3000;
+            (function frame() {
+                confetti({ particleCount: 7, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 7, angle: 120, spread: 55, origin: { x: 1 } });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+        if (typeof confetti === 'function') {
+            launch();
+        } else {
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
+            s.onload = launch;
+            document.head.appendChild(s);
+        }
+    }
 
     // 关闭面板
     document.getElementById('aa-close').onclick = function () {
@@ -106,6 +153,9 @@
             document.getElementById('aa-key-line').textContent =
                 newKey + ' | 剩余' + data.info.remain_days + '天';
 
+            // 换卡密成功 → 恢复默认颜色，停止闪烁
+            setPanelColor('default');
+
             msgEl.textContent = '卡密已更换';
             msgEl.style.color = '#ccffcc';
             input.value = '';
@@ -119,15 +169,15 @@
     // 验证卡密是否仍然有效（调用 /api/check）
     async function checkKeyValid() {
         var key = window.__BOSS_KEY || localStorage.getItem('boss_auto_key');
-        if (!key) return { valid: false, msg: '未找到卡密' };
+        if (!key) return { valid: false, msg: '未找到卡密', expired: false };
         var api = window.__BOSS_API || 'https://boss.smartice.ai';
         try {
             var res = await fetch(api + '/api/check?key=' + encodeURIComponent(key));
             var data = await res.json();
-            if (!data.ok) return { valid: false, msg: data.msg };
+            if (!data.ok) return { valid: false, msg: data.msg, expired: data.msg && data.msg.indexOf('过期') !== -1 };
             return { valid: true, info: data.info };
         } catch (e) {
-            return { valid: false, msg: '网络错误: ' + e.message };
+            return { valid: false, msg: '网络错误: ' + e.message, expired: false };
         }
     }
 
@@ -167,7 +217,7 @@
         return null;
     }
 
-    // 检测"无法进行沟通"限流弹窗 → 点确定、停止运行、面板变红
+    // 检测"无法进行沟通"限流弹窗 → 点确定、停止运行、放礼花
     function checkChatBlock() {
         var dialog = document.querySelector('.chat-block-dialog');
         if (!dialog) return false;
@@ -179,14 +229,10 @@
         // 停止运行
         running = false;
 
-        // 面板变红，醒目提示
-        var p = document.getElementById('aa-panel');
-        if (p) {
-            var inner = p.querySelector('div');
-            if (inner) inner.style.background = 'linear-gradient(135deg,#e74c3c,#c0392b)';
-        }
+        // 面板不变色，放礼花庆祝投完了
+        fireConfetti();
 
-        status('⚠ 今日已达150人上限！已投递' + count + '个，跳过' + skipped + '个');
+        status('🎉 今日已达150人上限！已投递' + count + '个，跳过' + skipped + '个');
 
         // 上报限流事件到后台
         var reportApi = window.__BOSS_API || 'https://boss.smartice.ai';
@@ -268,12 +314,8 @@
         idx = 0;
         updateUI();
 
-        // 重置面板颜色（可能上次因限流变红了）
-        var p = document.getElementById('aa-panel');
-        if (p) {
-            var inner = p.querySelector('div');
-            if (inner) inner.style.background = 'linear-gradient(135deg,#00bebd,#00a8a7)';
-        }
+        // 重置面板颜色
+        setPanelColor('default');
 
         // 每次开始投递前验证卡密有效性
         status('验证卡密中...');
@@ -281,10 +323,14 @@
         if (!running) return;
         if (!keyCheck.valid) {
             running = false;
-            // 面板变红提示
-            var inner2 = p ? p.querySelector('div') : null;
-            if (inner2) inner2.style.background = 'linear-gradient(135deg,#e74c3c,#c0392b)';
-            status('卡密无效: ' + keyCheck.msg);
+            if (keyCheck.expired) {
+                // 卡密到期 → 灰色 + 输入框闪烁
+                setPanelColor('gray');
+                status('卡密已到期，请更换卡密');
+            } else {
+                setPanelColor('gray');
+                status('卡密无效: ' + keyCheck.msg);
+            }
             return;
         }
         // 更新面板上的剩余天数
@@ -388,8 +434,9 @@
         }
 
         running = false;
-        // 正常结束（非限流）才显示完成信息
+        // 正常结束（非限流）→ 面板变黄
         if (!document.querySelector('.chat-block-dialog')) {
+            setPanelColor('yellow');
             status('完成！投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
         }
     }
@@ -397,6 +444,7 @@
     document.getElementById('aa-start').onclick = run;
     document.getElementById('aa-stop').onclick = function () {
         running = false;
+        setPanelColor('yellow');
         status('已停止，投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
     };
 })();
