@@ -22,11 +22,11 @@ app.use(express.json());
 
 // ---- 数据库连接池 ----
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'boss_auto_apply',
+    host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
+    user: process.env.MYSQL_USER || process.env.DB_USER || 'root',
+    password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
+    database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'zeabur',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
@@ -36,7 +36,7 @@ const pool = mysql.createPool({
 // ---- 注入 Bookmarklet 代码 ----
 let SCRIPT_CODE = '';
 try {
-    const v10Path = join(__dirname, '..', 'bookmarklet_auto_apply_v10.js');
+    const v10Path = join(__dirname, 'bookmarklet_auto_apply_v10.js');
     const v10Content = readFileSync(v10Path, 'utf8');
     SCRIPT_CODE = v10Content.slice(v10Content.indexOf('(function () {'));
     console.log('Bookmarklet 代码加载成功，长度:', SCRIPT_CODE.length);
