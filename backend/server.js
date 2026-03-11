@@ -198,7 +198,7 @@ function buildLoaderJS(apiBase) {
         var d = document.createElement('div'); d.id = 'aa-login';
         d.innerHTML = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:99998"></div>'
             + '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;background:#fff;padding:36px 32px;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.25);font-family:system-ui;text-align:center;min-width:320px">'
-                + '<div id="aa-login-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:28px;color:#999;line-height:1;font-weight:300">\\\\u00d7</div>'
+                + '<div id="aa-login-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:28px;color:#999;line-height:1;font-weight:300">×</div>'
                 + '<div style="font-size:22px;font-weight:bold;color:#00bebd;margin-bottom:6px">Boss 自动投递</div>'
                 + '<div style="color:#999;font-size:13px;margin-bottom:20px">请输入卡密激活使用</div>'
                 + '<input id="aa-login-input" type="text" placeholder="BOSS-XXXX-XXXX" maxlength="14" style="width:100%;padding:13px;border:2px solid #eee;border-radius:8px;font-size:17px;font-family:monospace;text-align:center;text-transform:uppercase;outline:none;box-sizing:border-box;transition:border-color 0.2s" autocomplete="off" spellcheck="false">'

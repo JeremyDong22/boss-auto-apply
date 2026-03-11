@@ -7,27 +7,29 @@ Boss 直聘（zhipin.com）自动投递简历工具。核心是一个 Bookmarkle
 
 ## 线上环境
 
-### Zeabur 部署（当前生产环境）
-| 服务 | URL | 类型 |
+### Zeabur 部署（当前生产环境 - 阿里云）
+| 服务 | URL | 说明 |
 |------|-----|------|
-| 前端（客户页） | https://boss-frontend.preview.aliyun-zeabur.cn | Zeabur Static |
-| 前端（管理后台） | https://boss-frontend.preview.aliyun-zeabur.cn/admin.html | Zeabur Static |
-| 后端 API | https://boss-backend.preview.aliyun-zeabur.cn | Zeabur (Node.js + Express) |
-| 数据库 | 47.108.220.1:31414 (内部网络自动连接) | Zeabur MySQL |
-| GitHub | https://github.com/JeremyDong22/boss-auto-apply (private) | |
+| 前端（客户页） | https://boss-frontend.preview.aliyun-zeabur.cn | 卡密输入 + Bookmarklet 下载 |
+| 前端（管理后台） | https://boss-frontend.preview.aliyun-zeabur.cn/admin.html | 卡密管理 + 数据统计 |
+| 后端 API | https://boss-backend.preview.aliyun-zeabur.cn | Node.js + Express + MySQL |
+| 数据库 | Zeabur MySQL (内部网络) | 47.108.220.1:31414 (外部访问) |
+| GitHub | https://github.com/JeremyDong22/boss-auto-apply (private) | 主仓库 |
 
-### Cloudflare 部署（旧环境，待废弃）
-| 服务 | URL | 类型 |
+**部署方式**：GitHub push → Zeabur 自动部署
+**数据库连接**：后端通过 Zeabur 内部网络自动连接（MYSQL_HOST 等环境变量）
+
+### Cloudflare 部署（已废弃）
+| 服务 | URL | 状态 |
 |------|-----|------|
-| 前端（客户页） | https://boss-auto-apply-website.pages.dev/ | Cloudflare Pages |
-| 前端（管理后台） | https://boss-auto-apply-website.pages.dev/admin.html | Cloudflare Pages |
-| 后端 API（旧） | https://boss.smartice.ai | Cloudflare Worker |
-| 数据库（旧） | boss-license-db | Cloudflare D1 |
+| 前端 | https://boss-auto-apply-website.pages.dev/ | ❌ 已停用 |
+| 后端 | https://boss.smartice.ai | ❌ 已停用 |
+| 数据库 | boss-license-db (D1) | ❌ 已停用 |
 
 ## 管理员信息
 
-- **管理后台地址**: https://boss-auto-apply-website.pages.dev/admin.html
-- **管理员密码**: `bossboss`（可通过 Worker 环境变量 `ADMIN_PASSWORD` 修改）
+- **管理后台地址**: https://boss-frontend.preview.aliyun-zeabur.cn/admin.html
+- **管理员密码**: `bossboss`（环境变量 `ADMIN_PASSWORD`）
 - **认证方式**: 密码登录 → sessionStorage 存储 → 所有 admin API 请求带 `Bearer <password>` 头
 - **客服微信**: xmin9805
 
