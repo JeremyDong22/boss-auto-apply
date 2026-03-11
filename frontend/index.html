@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- index.html - v8 - 重构布局：全宽 section 交替底色，统一容器宽度，视觉一致 -->
-<!-- ClawBoss - 你的求职小助手 -->
-<!-- 卡密输入在书签 app 内完成，网站不需要输入卡密 -->
+<!-- redesign-dark-full.html - v6 - 终端代码风，全屏铺满，大字大留白 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ClawBoss - 约面交给我，你赶紧去学习</title>
@@ -12,472 +10,594 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
                  "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    background: #f0f2f5;
-    color: #333;
+    background: #0b0f19;
+    color: #c9d1d9;
     min-height: 100vh;
+    overflow-x: hidden;
   }
+  a { color: #00bebd; text-decoration: none; }
+  a:hover { color: #00e5d0; }
 
-  /* 统一容器 */
-  .container {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 0 24px;
-  }
+  /* 内容容器 — 全宽 section 内限宽 */
+  .inner { max-width: 1100px; margin: 0 auto; padding: 0 48px; }
 
-  /* 全宽 section 条带 */
-  .band {
-    padding: 64px 0;
-  }
-  .band--hero {
-    background: linear-gradient(135deg, #00bebd, #009e9d);
-    color: #fff;
-    padding: 72px 0;
-  }
-  .band--white { background: #fff; }
-  .band--gray { background: #f0f2f5; }
-  .band--tint { background: #f7fafa; }
-
-  /* Hero */
-  .hero-inner {
+  /* ======== HERO — 一整屏 ======== */
+  .hero {
+    min-height: 100vh;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 40px;
+    background: #0b0f19;
+    position: relative;
+    overflow: hidden;
   }
-  .hero-content { flex: 1; }
-  .hero-content h1 { font-size: 40px; font-weight: 800; margin-bottom: 12px; }
-  .hero-content p { font-size: 18px; opacity: 0.92; line-height: 1.7; }
-  .hero-image { flex: 0 0 180px; }
-  .hero-image img {
-    width: 180px;
-    height: 180px;
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 800px; height: 800px;
+    right: -200px; top: -200px;
+    background: radial-gradient(circle, rgba(0,190,189,.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-flex {
+    display: flex;
+    align-items: center;
+    gap: 80px;
+    width: 100%;
+  }
+  .hero-left { flex: 1; position: relative; z-index: 1; }
+  .hero-left .prompt {
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    font-size: 16px;
+    color: #00bebd;
+    margin-bottom: 24px;
+    opacity: .7;
+  }
+  .hero-left h1 {
+    font-size: 64px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+  .hero-left h1 em { font-style: normal; color: #00bebd; }
+  .hero-left .desc {
+    font-size: 20px;
+    color: #6e7a8a;
+    line-height: 1.8;
+    margin-bottom: 44px;
+    max-width: 540px;
+  }
+  .hero-right { flex: 0 0 260px; position: relative; z-index: 1; }
+  .hero-right img {
+    width: 240px; height: 240px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid rgba(255,255,255,0.4);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    border: 4px solid rgba(0,190,189,.25);
+    box-shadow: 0 0 80px rgba(0,190,189,.12), 0 12px 40px rgba(0,0,0,.3);
+    animation: bob 5s ease-in-out infinite;
   }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 
-  /* Section 标题 */
-  .band-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 32px;
-    text-align: center;
-  }
-  .band-title span { color: #00bebd; }
-
-  /* How it works - 3 cards */
-  .how-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-  .how-card {
-    background: #fff;
-    border-radius: 14px;
-    padding: 40px 24px;
-    text-align: center;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  }
-  .how-card .num {
+  /* 拖拽按钮 */
+  .drag-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .drag-btn {
     display: inline-flex;
-    width: 40px; height: 40px;
-    background: #00bebd;
-    color: #fff;
-    border-radius: 50%;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 14px;
-  }
-  .how-card h3 { font-size: 16px; color: #333; margin-bottom: 8px; }
-  .how-card p { font-size: 14px; color: #888; line-height: 1.6; }
-
-  /* Install - 左右两栏：安装 + 使用步骤 */
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 28px;
-    align-items: start;
-  }
-  .card {
-    background: #fff;
-    border-radius: 14px;
-    padding: 32px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  }
-  .card h2 {
-    font-size: 18px;
-    color: #00bebd;
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  .card p { line-height: 1.7; font-size: 14px; }
-  .card ul { padding-left: 20px; line-height: 2; font-size: 14px; }
-  .card a { color: #00bebd; text-decoration: none; }
-  .card a:hover { text-decoration: underline; }
-  .note { color: #999; font-size: 12px; margin-top: 10px; }
-
-  /* Drag area */
-  .drag-area {
-    display: flex;
     align-items: center;
     gap: 12px;
-    margin: 16px 0 8px;
-  }
-  .drag-btn {
-    display: inline-block;
-    padding: 14px 28px;
-    background: linear-gradient(135deg, #00bebd, #00a8a7);
+    padding: 18px 40px;
+    background: #00bebd;
     color: #fff !important;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 14px;
     text-decoration: none !important;
     cursor: grab;
     -webkit-user-drag: element;
-    box-shadow: 0 3px 12px rgba(0,190,189,0.35);
-    transition: box-shadow 0.2s, transform 0.2s;
-    white-space: nowrap;
+    box-shadow: 0 0 40px rgba(0,190,189,.25), 0 6px 24px rgba(0,190,189,.2);
+    transition: all .25s;
   }
-  .drag-btn:hover { box-shadow: 0 6px 20px rgba(0,190,189,0.45); transform: translateY(-1px); }
+  .drag-btn:hover { transform: translateY(-3px); box-shadow: 0 0 60px rgba(0,190,189,.35), 0 10px 32px rgba(0,190,189,.28); }
   .drag-btn:active { cursor: grabbing; transform: translateY(0); }
-  .drag-hint { color: #999; font-size: 13px; }
+  .drag-btn svg { width: 22px; height: 22px; }
+  .drag-hint { font-size: 15px; color: #484f58; }
+  .drag-hint kbd {
+    display: inline-block;
+    background: #161b22;
+    border: 1px solid #2a2f3a;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 12px;
+    font-family: "SF Mono", Consolas, monospace;
+    color: #6e7681;
+  }
 
-  /* Steps */
-  .steps { display: flex; flex-direction: column; gap: 16px; }
-  .step { display: flex; gap: 14px; align-items: flex-start; }
-  .step-num {
-    flex-shrink: 0;
-    width: 28px; height: 28px;
-    background: #00bebd;
+  /* ======== 数据条 — 全宽 ======== */
+  .stats-band {
+    background: #0e1320;
+    border-top: 1px solid #161d2e;
+    border-bottom: 1px solid #161d2e;
+    padding: 36px 0;
+  }
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+  }
+  .stat { text-align: center; }
+  .stat .v {
+    font-size: 40px;
+    font-weight: 800;
+    color: #00bebd;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  .stat .t { font-size: 16px; color: #4a5568; margin-top: 6px; }
+
+  /* ======== Section 通用 ======== */
+  .section { padding: 100px 0; }
+  .section.bg-dark { background: #0b0f19; }
+  .section.bg-deeper { background: #0e1320; }
+  .sec-head { margin-bottom: 48px; }
+  .sec-label {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 14px;
+    color: #00bebd;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: .5;
+  }
+  .sec-title {
+    font-size: 40px;
+    font-weight: 800;
     color: #fff;
-    border-radius: 50%;
+    line-height: 1.3;
+  }
+  .sec-title span { color: #00bebd; }
+
+  /* ======== 终端步骤 ======== */
+  .terminal {
+    background: #0e1320;
+    border: 1px solid #161d2e;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .terminal-bar {
+    background: #131927;
+    padding: 12px 18px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 600;
-    margin-top: 2px;
+    gap: 8px;
+    border-bottom: 1px solid #161d2e;
   }
-  .step strong { font-size: 15px; }
-  .step p { font-size: 13px; color: #666; margin-top: 4px; line-height: 1.6; }
+  .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal-dot.r { background: #ff5f57; }
+  .terminal-dot.y { background: #ffbd2e; }
+  .terminal-dot.g { background: #28c840; }
+  .terminal-title {
+    margin-left: 12px;
+    font-size: 13px;
+    color: #3a4255;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  .terminal-body { padding: 36px 40px; }
 
-  /* Browser table */
-  .browser-details { margin-top: 8px; }
-  .browser-details summary {
-    color: #00bebd; cursor: pointer; font-size: 13px;
-    font-weight: 500; outline: none; user-select: none;
+  .cmd {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 32px;
   }
-  .browser-details summary:hover { text-decoration: underline; }
-  .compat-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
-  .compat-table th, .compat-table td {
-    padding: 8px 12px; text-align: left; border-bottom: 1px solid #f0f0f0;
+  .cmd:last-child { margin-bottom: 0; }
+  .cmd .caret {
+    color: #00bebd;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 3px;
+    user-select: none;
   }
-  .compat-table th { color: #999; font-weight: 500; font-size: 12px; }
-  .yes { color: #27ae60; font-weight: 600; }
-
-  /* Pricing cards */
-  .pricing-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-top: 16px;
+  .cmd .body h4 {
+    font-size: 20px;
+    color: #e6edf3;
+    font-weight: 700;
+    margin-bottom: 8px;
   }
-  .price-card {
-    background: #fff;
-    border: 2px solid #eee;
-    border-radius: 12px;
-    padding: 28px 16px;
-    text-align: center;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  }
-  .price-card:hover { border-color: #00bebd; box-shadow: 0 4px 16px rgba(0,190,189,0.15); }
-  .price-card.popular { border-color: #00bebd; position: relative; }
-  .price-card.popular::before {
-    content: '推荐';
-    position: absolute;
-    top: -10px; left: 50%; transform: translateX(-50%);
-    background: #00bebd; color: #fff;
-    font-size: 11px; font-weight: 600;
-    padding: 2px 10px; border-radius: 8px;
-  }
-  .price-card .duration { font-size: 15px; color: #666; margin-bottom: 10px; }
-  .price-card .price { font-size: 32px; font-weight: 700; color: #00bebd; }
-  .price-card .price span { font-size: 14px; font-weight: 400; color: #999; }
-  .price-card .unit { font-size: 13px; color: #999; margin-top: 6px; }
-
-  /* Pricing 描述 */
-  .pricing-desc {
-    text-align: center;
-    font-size: 15px;
-    color: #666;
+  .cmd .body p {
+    font-size: 16px;
+    color: #6e7681;
     line-height: 1.7;
   }
-
-  /* Notes 列表横排 */
-  .notes-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px 28px;
+  .cmd .body a {
+    color: #00bebd;
+    border-bottom: 1px dashed rgba(0,190,189,.3);
   }
-  .notes-grid li {
+  .cmd .body a:hover { border-bottom-color: #00bebd; text-decoration: none; }
+  .cmd .body details summary {
+    color: #00bebd;
     font-size: 14px;
-    line-height: 1.8;
-    color: #555;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: 500;
+  }
+  .cmd .body details summary:hover { text-decoration: underline; }
+
+  .compat-table {
+    width: 100%;
+    max-width: 480px;
+    border-collapse: collapse;
+    font-size: 15px;
+    margin-top: 12px;
+  }
+  .compat-table th, .compat-table td {
+    padding: 8px 14px;
+    text-align: left;
+    border-bottom: 1px solid #161d2e;
+  }
+  .compat-table th { color: #3a4255; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+  .compat-table td { color: #6e7681; }
+  .compat-ok { color: #3fb950; font-weight: 600; }
+
+  /* ======== 定价 ======== */
+  .pricing-desc {
+    font-size: 18px;
+    color: #4a5568;
+    margin-top: -32px;
+    margin-bottom: 8px;
+  }
+  .price-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 48px;
+  }
+  .p-card {
+    background: #0b0f19;
+    border: 1px solid #161d2e;
+    border-radius: 18px;
+    padding: 44px 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .3s;
+    position: relative;
+  }
+  .p-card:hover {
+    border-color: rgba(0,190,189,.4);
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(0,190,189,.08);
+  }
+  .p-card.pop {
+    border-color: #00bebd;
+    box-shadow: 0 0 32px rgba(0,190,189,.08);
+  }
+  .p-card.pop::before {
+    content: '推荐';
+    position: absolute;
+    top: -13px; left: 50%; transform: translateX(-50%);
+    background: #00bebd;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 16px;
+    border-radius: 8px;
+    letter-spacing: 1px;
+  }
+  .p-card .tier { font-size: 18px; color: #4a5568; margin-bottom: 18px; font-weight: 500; }
+  .p-card .amt {
+    font-size: 48px;
+    font-weight: 800;
+    color: #00bebd;
+    font-family: "SF Mono", Consolas, monospace;
+    line-height: 1;
+  }
+  .p-card .amt small { font-size: 18px; color: #3a4255; font-weight: 400; margin-left: 2px; }
+  .p-card .dur { font-size: 16px; color: #3a4255; margin-top: 10px; }
+
+  /* 联系方式 */
+  .contact-block { text-align: center; margin-top: 56px; }
+  .contact-block .lab { color: #4a5568; font-size: 16px; margin-bottom: 12px; }
+  .contact-block .wid {
+    font-size: 26px;
+    font-weight: 700;
+    color: #00bebd;
+    font-family: "SF Mono", Consolas, monospace;
+    letter-spacing: 3px;
+    padding: 14px 36px;
+    background: rgba(0,190,189,.06);
+    border: 1px dashed rgba(0,190,189,.2);
+    border-radius: 12px;
+    display: inline-block;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .contact-block .wid:hover { background: rgba(0,190,189,.10); border-color: #00bebd; }
+  .contact-block img {
+    display: block;
+    max-width: 160px;
+    margin: 20px auto 0;
+    border-radius: 12px;
+    border: 2px solid #161d2e;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
   }
 
+  /* ======== 注意事项 ======== */
+  .notes-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    margin-top: 44px;
+  }
+  .note-pill {
+    padding: 12px 24px;
+    background: #0e1320;
+    border: 1px solid #161d2e;
+    border-radius: 50px;
+    font-size: 16px;
+    color: #6e7681;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all .2s;
+  }
+  .note-pill:hover { border-color: rgba(0,190,189,.25); color: #8b949e; }
+  .note-pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: #00bebd;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ======== Footer ======== */
   .footer {
     text-align: center;
-    color: #bbb;
-    font-size: 12px;
-    padding: 24px 0 12px;
+    padding: 32px;
+    color: #1e2433;
+    font-size: 14px;
+    background: #0b0f19;
+    border-top: 1px solid #161d2e;
   }
 
-  /* 移动端 */
-  @media (max-width: 640px) {
-    .container { padding: 0 16px; }
-    .band { padding: 40px 0; }
-    .band--hero { padding: 44px 0; }
-    .hero-inner { flex-direction: column; text-align: center; gap: 20px; }
-    .hero-content h1 { font-size: 28px; }
-    .hero-content p { font-size: 16px; }
-    .hero-image { flex: 0 0 130px; }
-    .hero-image img { width: 130px; height: 130px; }
-    .how-cards { grid-template-columns: 1fr; gap: 12px; }
-    .two-col { grid-template-columns: 1fr; gap: 16px; }
-    .card { padding: 20px 16px; }
-    .pricing-cards { grid-template-columns: 1fr; }
-    .notes-grid { grid-template-columns: 1fr; }
+  /* Toast */
+  #toast {
+    position: fixed; top: 24px; left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: #131927; color: #e6edf3;
+    border: 1px solid #2a2f3a;
+    padding: 12px 28px; border-radius: 12px;
+    font-size: 16px; z-index: 9999;
+    transition: transform .3s; pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  }
+
+  /* ======== 响应式 ======== */
+  @media (max-width: 768px) {
+    .inner { padding: 0 24px; }
+    .hero { min-height: auto; }
+    .hero-flex { flex-direction: column; text-align: center; gap: 32px; }
+    .hero-left h1 { font-size: 36px; }
+    .hero-left .desc { font-size: 17px; max-width: 100%; }
+    .hero-right { flex: 0 0 auto; }
+    .hero-right img { width: 160px; height: 160px; }
+    .drag-row { justify-content: center; }
+    .drag-btn { padding: 14px 28px; font-size: 16px; }
+    .stats-row { gap: 32px; flex-wrap: wrap; }
+    .stat .v { font-size: 28px; }
+    .section { padding: 60px 0; }
+    .sec-title { font-size: 28px; }
+    .terminal-body { padding: 20px; }
+    .cmd .body h4 { font-size: 17px; }
+    .cmd .body p { font-size: 14px; }
+    .price-grid { grid-template-columns: 1fr; max-width: 300px; margin-left: auto; margin-right: auto; }
+    .notes-cloud { justify-content: flex-start; }
   }
 </style>
 </head>
 <body>
 
-<!-- Hero -->
-<div class="band band--hero">
-  <div class="container">
-    <div class="hero-inner">
-      <div class="hero-content">
-        <h1>ClawBoss</h1>
-        <p>约面交给我，你赶紧去学习</p>
+<!-- ======== HERO — 全屏 ======== -->
+<section class="hero">
+  <div class="inner">
+    <div class="hero-flex">
+      <div class="hero-left">
+        <div class="prompt">$ clawboss --start</div>
+        <h1>约面交给<br><em>ClawBoss</em></h1>
+        <p class="desc">你赶紧去学习。把我装进书签栏，在 Boss直聘 我帮你自动沟通所有匹配的职位，每天 150+。</p>
+        <div class="drag-row">
+          <a id="dragLink" class="drag-btn" href="#" draggable="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            拖我到书签栏
+          </a>
+          <span class="drag-hint">书签栏隐藏了？<kbd>Ctrl+Shift+B</kbd>（Mac: <kbd>Cmd+Shift+B</kbd>）</span>
+        </div>
       </div>
-      <div class="hero-image">
+      <div class="hero-right">
         <img src="images/clawboss-mascot.png" alt="ClawBoss 吉祥物">
       </div>
     </div>
   </div>
+</section>
+
+<!-- ======== 数据条 — 全宽 ======== -->
+<div class="stats-band">
+  <div class="stats-row">
+    <div class="stat"><div class="v">150+</div><div class="t">每日自动沟通</div></div>
+    <div class="stat"><div class="v">3s</div><div class="t">安装到书签</div></div>
+    <div class="stat"><div class="v">0</div><div class="t">封号风险</div></div>
+  </div>
 </div>
 
-<!-- How it works -->
-<div class="band band--white">
-  <div class="container">
-    <div class="band-title">三步开始，<span>超简单</span></div>
-    <div class="how-cards">
-      <div class="how-card">
-        <div class="num">1</div>
-        <h3>把我装进书签</h3>
-        <p>拖拽按钮到书签栏<br>我就住进你浏览器了</p>
+<!-- ======== 使用步骤 ======== -->
+<div class="section bg-dark">
+  <div class="inner">
+    <div class="sec-head">
+      <div class="sec-label">// how to use</div>
+      <h2 class="sec-title">四步开始，<span>跟着走</span></h2>
+    </div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span class="terminal-title">clawboss-guide.sh</span>
       </div>
-      <div class="how-card">
-        <div class="num">2</div>
-        <h3>给我看卡密</h3>
-        <p>点击书签后输入卡密<br>我就知道你是谁了</p>
-      </div>
-      <div class="how-card">
-        <div class="num">3</div>
-        <h3>我帮你约面</h3>
-        <p>点击开始我就出发<br>你去学习等消息</p>
+      <div class="terminal-body">
+
+        <div class="cmd">
+          <span class="caret">$</span>
+          <div class="body">
+            <h4>确认浏览器</h4>
+            <p>我只能在 Chrome、Edge、360、QQ、搜狗这些浏览器里工作。推荐 Chrome。</p>
+            <details>
+              <summary>看看我支持哪些浏览器</summary>
+              <table class="compat-table">
+                <tr><th>浏览器</th><th>状态</th><th>备注</th></tr>
+                <tr><td>Chrome</td><td class="compat-ok">能用</td><td>推荐</td></tr>
+                <tr><td>Edge</td><td class="compat-ok">能用</td><td></td></tr>
+                <tr><td>360浏览器</td><td class="compat-ok">能用</td><td>极速模式</td></tr>
+                <tr><td>QQ浏览器</td><td class="compat-ok">能用</td><td></td></tr>
+                <tr><td>搜狗浏览器</td><td class="compat-ok">能用</td><td></td></tr>
+                <tr><td>Firefox</td><td class="compat-ok">能用</td><td></td></tr>
+              </table>
+            </details>
+          </div>
+        </div>
+
+        <div class="cmd">
+          <span class="caret">$</span>
+          <div class="body">
+            <h4>打开 Boss直聘</h4>
+            <p>去 <a href="https://www.zhipin.com/web/geek/jobs" target="_blank" rel="noopener">Boss直聘职位列表页</a>，先筛选好你想要的职位（城市、岗位、薪资这些）。</p>
+          </div>
+        </div>
+
+        <div class="cmd">
+          <span class="caret">$</span>
+          <div class="body">
+            <h4>点我，给我看卡密</h4>
+            <p>点书签栏里的「ClawBoss」，第一次用会问你要卡密，输进去就行。我会记住的，下次不用再输。</p>
+          </div>
+        </div>
+
+        <div class="cmd">
+          <span class="caret">$</span>
+          <div class="body">
+            <h4>让我开始干活</h4>
+            <p>面板出来后点「开始」，我就去帮你约面了。你可以看到卡密还能用几天，也可以随时换新卡密。</p>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 
-<!-- Install + Steps 双栏 -->
-<div class="band band--gray">
-  <div class="container">
-    <div class="two-col">
-      <!-- 安装 -->
-      <div class="card">
-        <h2>把我装进书签栏</h2>
-        <p>把下面这个按钮<b>拖</b>到浏览器书签栏，我就住进去了。卡密等会儿用的时候再给我看。</p>
-        <div class="drag-area">
-          <a id="dragLink" class="drag-btn" href="#" draggable="true">ClawBoss</a>
-          <span class="drag-hint">&larr; 拖我到书签栏</span>
-        </div>
-        <p class="note">看不到书签栏？按 Ctrl+Shift+B（Mac: Cmd+Shift+B）就出来了。</p>
-      </div>
-
-      <!-- 使用步骤 -->
-      <div class="card">
-        <h2>怎么用我</h2>
-        <div class="steps">
-          <div class="step">
-            <span class="step-num">1</span>
-            <div>
-              <strong>确认浏览器</strong>
-              <p>我只能在 Chrome、Edge、360、QQ、搜狗这些浏览器里工作。</p>
-              <details class="browser-details">
-                <summary>看看我支持哪些浏览器</summary>
-                <table class="compat-table">
-                  <tr><th>浏览器</th><th>能用吗</th><th>备注</th></tr>
-                  <tr><td>Chrome</td><td class="yes">能用</td><td>推荐</td></tr>
-                  <tr><td>Edge</td><td class="yes">能用</td><td></td></tr>
-                  <tr><td>360浏览器</td><td class="yes">能用</td><td>极速模式</td></tr>
-                  <tr><td>QQ浏览器</td><td class="yes">能用</td><td></td></tr>
-                  <tr><td>搜狗浏览器</td><td class="yes">能用</td><td></td></tr>
-                  <tr><td>Firefox</td><td class="yes">能用</td><td></td></tr>
-                </table>
-              </details>
-            </div>
-          </div>
-          <div class="step">
-            <span class="step-num">2</span>
-            <div>
-              <strong>打开 Boss直聘</strong>
-              <p>去 <a href="https://www.zhipin.com/web/geek/jobs" target="_blank" rel="noopener">Boss直聘职位列表页</a>，先筛选好你想要的职位（城市、岗位、薪资这些）。</p>
-            </div>
-          </div>
-          <div class="step">
-            <span class="step-num">3</span>
-            <div>
-              <strong>点我，给我看卡密</strong>
-              <p>点书签栏里的「ClawBoss」，第一次用会问你要卡密，输进去就行。我会记住的，下次不用再输。</p>
-            </div>
-          </div>
-          <div class="step">
-            <span class="step-num">4</span>
-            <div>
-              <strong>让我开始干活</strong>
-              <p>面板出来后点「开始」，我就去帮你约面了。你可以看到卡密还能用几天，也可以随时换新卡密。</p>
-            </div>
-          </div>
-        </div>
-      </div>
+<!-- ======== 定价 ======== -->
+<div class="section bg-deeper">
+  <div class="inner">
+    <div class="sec-head">
+      <div class="sec-label">// pricing</div>
+      <h2 class="sec-title">买张<span>卡密</span></h2>
     </div>
-  </div>
-</div>
-
-<!-- Pricing -->
-<div class="band band--white">
-  <div class="container">
-    <div class="band-title">买张<span>卡密</span></div>
     <p class="pricing-desc">买了卡密，在 Boss直聘 页面点我，输入卡密就能用了。</p>
-    <div class="pricing-cards" id="pricingCards">
-      <div style="text-align:center;color:#999;font-size:13px;padding:20px 0">加载定价中...</div>
+    <div class="price-grid" id="pricingCards">
+      <div style="text-align:center;color:#3a4255;font-size:16px;padding:32px 0;grid-column:1/-1">加载定价中...</div>
     </div>
-    <!-- 联系方式（从后端动态加载） -->
-    <div id="contactArea" style="margin-top:24px;text-align:center;display:none">
-      <div style="width:100%;height:1px;background:#f0f0f0;margin-bottom:16px"></div>
-      <p style="font-size:14px;color:#666;margin-bottom:10px">加微信买卡密：</p>
-      <p id="contactWechatId" style="font-size:18px;font-weight:700;color:#00bebd;font-family:monospace;letter-spacing:1px;margin-bottom:10px"></p>
-      <img id="contactQrcode" style="max-width:200px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);display:none" alt="微信二维码">
+    <div id="contactArea" class="contact-block" style="display:none">
+      <div class="lab">加微信买卡密：</div>
+      <img id="contactQrcode" style="display:none" alt="微信二维码">
+      <div id="contactWechatId" class="wid" title="点击复制" style="margin-top:20px"></div>
+      <p style="font-size:13px;color:#3a4255;margin-top:8px;">点击微信号可复制</p>
     </div>
   </div>
 </div>
 
-<!-- Notes -->
-<div class="band band--tint">
-  <div class="container">
-    <div class="band-title">用我之前<span>要知道</span></div>
-    <ul class="notes-grid">
-      <li>Boss直聘每天能聊的人有上限，到了我就停下来。</li>
-      <li>干活的时候你可以随时点「停止」让我歇会儿。</li>
-      <li>聊过的职位我会跳过，不会重复打招呼。</li>
-      <li>记得先把简历填完整，不然 HR 看不到你的亮点。</li>
-      <li>卡密绑定你的设备，别给别人用哦。</li>
-    </ul>
+<!-- ======== 注意事项 ======== -->
+<div class="section bg-dark" style="text-align:center;">
+  <div class="inner">
+    <div class="sec-head" style="text-align:center;">
+      <div class="sec-label">// good to know</div>
+      <h2 class="sec-title">用我之前<span>要知道</span></h2>
+    </div>
+    <div class="notes-cloud">
+      <div class="note-pill">Boss直聘每天能聊的人有上限，到了我就停下来</div>
+      <div class="note-pill">干活的时候你可以随时点「停止」让我歇会儿</div>
+      <div class="note-pill">聊过的职位我会跳过，不会重复打招呼</div>
+      <div class="note-pill">记得先把简历填完整，不然 HR 看不到你的亮点</div>
+      <div class="note-pill">卡密绑定你的设备，别给别人用哦</div>
+    </div>
   </div>
 </div>
 
 <!-- Footer -->
-<div class="band" style="padding:20px 0;background:#f0f2f5;">
-  <div class="container">
-    <div class="footer">ClawBoss - 约面交给我，你赶紧去学习</div>
-  </div>
-</div>
+<footer class="footer">ClawBoss — 约面交给我，你赶紧去学习</footer>
 
-<div id="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:#333;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:9999;transition:transform 0.3s;pointer-events:none"></div>
+<div id="toast"></div>
 
 <script>
 function showToast(msg) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.transform = 'translateX(-50%) translateY(0)';
-    setTimeout(function() { t.style.transform = 'translateX(-50%) translateY(-80px)'; }, 2500);
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(function() { t.style.transform = 'translateX(-50%) translateY(-80px)'; }, 2500);
 }
 
-// ---- 配置 ----
 var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-    ? 'http://localhost:3456'
-    : 'https://boss-backend.preview.aliyun-zeabur.cn';
+  ? 'http://localhost:3456'
+  : 'https://boss-backend.preview.aliyun-zeabur.cn';
 
-// 超薄 loader bookmarklet（~120字符）
-// 所有 UI 和逻辑从 /api/loader 拉取，修改登录面板无需用户重新拖书签
-function buildLoaderBookmarklet() {
-    var api = API_BASE;
-    return "javascript:void(fetch('" + api + "/api/loader').then(r=>r.text()).then(eval).catch(e=>alert('加载失败:'+e.message)))";
-}
+document.getElementById('dragLink').href =
+  "javascript:void(fetch('" + API_BASE + "/api/loader').then(r=>r.text()).then(eval).catch(e=>alert('加载失败:'+e.message)))";
 
-// 页面加载时直接设置书签链接
-document.getElementById('dragLink').href = buildLoaderBookmarklet();
+// 微信号点击复制
+document.getElementById('contactWechatId').addEventListener('click', function() {
+  var id = this.textContent;
+  if (!id) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(id).then(function() { showToast('微信号已复制: ' + id); })
+      .catch(function() { showToast('微信号: ' + id); });
+  } else { showToast('微信号: ' + id); }
+});
 
-// 加载联系方式 + 定价
+// 加载定价 + 联系方式
 fetch(API_BASE + '/api/contact').then(function(r) { return r.json(); }).then(function(d) {
-    if (!d.ok) return;
-    // 联系方式
-    var area = document.getElementById('contactArea');
-    if (d.wechat_id) {
-        document.getElementById('contactWechatId').textContent = d.wechat_id;
-        area.style.display = 'block';
-    }
-    if (d.wechat_qrcode) {
-        var img = document.getElementById('contactQrcode');
-        img.src = d.wechat_qrcode;
-        img.style.display = 'inline-block';
-        area.style.display = 'block';
-    }
-    // 定价方案
-    if (d.pricing && d.pricing.length > 0) {
-        var html = '';
-        d.pricing.forEach(function(p) {
-            html += '<div class="price-card' + (p.popular ? ' popular' : '') + '">' +
-                '<div class="duration">' + p.name + '</div>' +
-                '<div class="price">' + p.price + '<span>' + (p.unit || '元') + '</span></div>' +
-                '<div class="unit">' + p.duration + '</div></div>';
-        });
-        document.getElementById('pricingCards').innerHTML = html;
-
-        // 添加卡片点击事件
-        document.querySelectorAll('.price-card').forEach(function(card) {
-            card.addEventListener('click', function() {
-                var wechatId = document.getElementById('contactWechatId').textContent;
-                if (wechatId) {
-                    // 复制微信号到剪贴板
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(wechatId).then(function() {
-                            showToast('微信号已复制: ' + wechatId);
-                        }).catch(function() {
-                            showToast('微信号: ' + wechatId);
-                        });
-                    } else {
-                        showToast('微信号: ' + wechatId);
-                    }
-                    // 滚动到联系方式区域
-                    document.getElementById('contactArea').scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    showToast('请联系客服获取卡密');
-                }
-            });
-        });
-    }
+  if (!d.ok) return;
+  var area = document.getElementById('contactArea');
+  if (d.wechat_id) {
+    document.getElementById('contactWechatId').textContent = d.wechat_id;
+    area.style.display = 'block';
+  }
+  if (d.wechat_qrcode) {
+    var img = document.getElementById('contactQrcode');
+    img.src = d.wechat_qrcode;
+    img.style.display = 'inline-block';
+    area.style.display = 'block';
+  }
+  if (d.pricing && d.pricing.length > 0) {
+    var html = '';
+    d.pricing.forEach(function(p) {
+      html += '<div class="p-card' + (p.popular ? ' pop' : '') + '">' +
+        '<div class="tier">' + p.name + '</div>' +
+        '<div class="amt">' + p.price + '<small>' + (p.unit || '元') + '</small></div>' +
+        '<div class="dur">' + p.duration + '</div></div>';
+    });
+    document.getElementById('pricingCards').innerHTML = html;
+    document.querySelectorAll('.p-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        var wid = document.getElementById('contactWechatId').textContent;
+        if (wid) {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(wid).then(function() { showToast('微信号已复制: ' + wid); })
+              .catch(function() { showToast('微信号: ' + wid); });
+          } else { showToast('微信号: ' + wid); }
+          document.getElementById('contactArea').scrollIntoView({ behavior: 'smooth' });
+        } else { showToast('请联系客服获取卡密'); }
+      });
+    });
+  }
 }).catch(function() {
-    document.getElementById('pricingCards').innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:20px 0">请联系客服获取价格</div>';
+  document.getElementById('pricingCards').innerHTML = '<div style="text-align:center;color:#3a4255;font-size:16px;padding:32px 0;grid-column:1/-1">请联系客服获取价格</div>';
 });
 </script>
 </body>
