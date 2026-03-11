@@ -1,4 +1,5 @@
-// v13 - Boss 直聘自动投递 Bookmarklet
+// v13.1 - Boss 直聘自动投递 Bookmarklet
+// v13.1 修复：暂停后继续会重复处理同一张卡片的 bug（idx 提前自增）
 // v13 改进：停下后显示"继续"（接着投）和"重开"（清零重来），投递逻辑更完整
 // v12 改进：面板添加 ClawBoss 吉祥物头像，版本号移至面板右下角极弱化显示
 // v12 改进：解码 Boss PUA 字体加密薪资（U+E030~E039 → 0~9），修复薪资乱码
@@ -443,6 +444,8 @@
             }
 
             var card = cards[idx];
+            var currentIdx = idx;  // 记录当前处理的索引
+            idx++;                 // 立即自增，暂停后继续不会重复处理同一张卡
             scrollToCard(card);
             await wait(500);
             if (!running) break;
@@ -452,7 +455,7 @@
             var jobName = name ? name.textContent.trim() : '未知';
             var salaryEl = card.querySelector('.job-salary');
             var jobSalary = salaryEl ? decodeSalary(salaryEl.textContent.trim()) : '';
-            status('[' + (idx + 1) + '/' + cards.length + '] ' + jobName);
+            status('[' + (currentIdx + 1) + '/' + cards.length + '] ' + jobName);
 
             clickCard(card);
             await wait(2000);
@@ -501,7 +504,6 @@
                 updateUI();
             }
 
-            idx++;
             updateUI();
             await wait(1500);
         }
