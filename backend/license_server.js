@@ -262,6 +262,40 @@ const server = http.createServer(async (req, res) => {
 
     // ---- 管理员 API ----
 
+    // 管理员登录（复用现有防暴力破解机制）
+    if (url.pathname === '/api/admin/login' && req.method === 'POST') {
+        const rateCheck = checkRateLimit(ip);
+        if (rateCheck.blocked) {
+            res.writeHead(429);
+            res.end(JSON.stringify({ ok: false, msg: rateCheck.msg, blocked: true }));
+            return;
+        }
+
+        let body = {};
+        try {
+            const chunks = [];
+            for await (const chunk of req) chunks.push(chunk);
+            body = JSON.parse(Buffer.concat(chunks).toString());
+        } catch (e) {}
+
+        const password = 'bossboss';  // 本地开发默认密码
+
+        if (body.password !== password) {
+            const failure = recordFailure(ip);
+            const msg = failure.locked
+                ? `错误次数过多，已锁定 ${failure.lock_minutes} 分钟`
+                : `密码错误（还剩 ${failure.remain_attempts} 次机会）`;
+            res.writeHead(403);
+            res.end(JSON.stringify({ ok: false, msg, remain_attempts: failure.remain_attempts, blocked: failure.locked }));
+            return;
+        }
+
+        clearFailures(ip);
+        res.writeHead(200);
+        res.end(JSON.stringify({ ok: true }));
+        return;
+    }
+
     // 列出所有卡密（含完整信息）
     if (url.pathname === '/api/admin/keys' && req.method === 'GET') {
         const keys = loadKeys();
@@ -352,6 +386,15 @@ const server = http.createServer(async (req, res) => {
         console.log(`[${new Date().toLocaleTimeString()}] 删除卡密: ${body.key}`);
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.writeHead(200); res.end(JSON.stringify({ ok: true })); return;
+    }
+
+    // 卡密使用统计（本地版：无 DB，返回空数据）
+    if (url.pathname === '/api/admin/stats' && req.method === 'GET') {
+        const keyCode = url.searchParams.get('key');
+        if (!keyCode) { res.writeHead(400); res.end(JSON.stringify({ ok: false, msg: '缺少卡密' })); return; }
+        res.writeHead(200);
+        res.end(JSON.stringify({ ok: true, total_applied: 0, daily: [], logs: [] }));
+        return;
     }
 
     // 查看被锁定的 IP

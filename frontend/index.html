@@ -99,6 +99,7 @@
     font-weight: 600;
     text-decoration: none !important;
     cursor: grab;
+    -webkit-user-drag: element; /* Chrome/Safari 明确允许拖拽 */
     box-shadow: 0 3px 12px rgba(0,190,189,0.35);
     transition: box-shadow 0.2s, transform 0.2s;
     white-space: nowrap;
@@ -221,7 +222,7 @@
     <h2>安装书签</h2>
     <p>将下方按钮<b>拖拽</b>到浏览器书签栏即可完成安装。书签是通用的，卡密在使用时输入。</p>
     <div class="drag-area">
-      <a id="dragLink" class="drag-btn" href="#">Boss自动投递</a>
+      <a id="dragLink" class="drag-btn" href="#" draggable="true">Boss自动投递</a>
       <span class="drag-hint">&larr; 拖我到书签栏</span>
     </div>
     <p class="note">如果看不到书签栏，按 Ctrl+Shift+B（Mac: Cmd+Shift+B）显示。</p>
