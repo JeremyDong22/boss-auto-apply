@@ -937,7 +937,7 @@ async function viewStats(code) {
                 var percentage = Math.round((d.applied / maxApplied) * 100);
                 var barWidth = Math.max(percentage, 2); // 最小2%可见
                 chartHtml += '<div style="display:flex;align-items:center;gap:12px">' +
-                    '<span style="font-size:12px;color:#666;min-width:60px;text-align:right">' + d.date.slice(5) + '</span>' +
+                    '<span style="font-size:12px;color:#666;min-width:60px;text-align:right">' + d.date.slice(0,10).slice(5) + '</span>' +
                     '<div style="flex:1;background:#f0f0f0;border-radius:4px;height:24px;position:relative;overflow:hidden">' +
                     '<div style="width:' + barWidth + '%;height:100%;background:linear-gradient(90deg,#00bebd,#00a8a7);border-radius:4px;transition:width 0.3s"></div>' +
                     '</div>' +
@@ -948,36 +948,82 @@ async function viewStats(code) {
             document.getElementById('dailyChart').innerHTML = chartHtml;
         }
 
-        // 最近投递记录 - 表格式
-        var logs = data.logs || [];
-        if (logs.length === 0) {
-            document.getElementById('logsContainer').innerHTML = '<div style="color:#999;font-size:13px;text-align:center;padding:20px">暂无记录</div>';
-        } else {
-            var logsHtml = '<div style="background:#f9f9f9;border-radius:8px;overflow:hidden">' +
-                '<table style="width:100%;border-collapse:collapse">' +
-                '<thead><tr style="background:#f0f0f0">' +
-                '<th style="padding:10px 12px;text-align:left;font-size:12px;color:#666;font-weight:500">时间</th>' +
-                '<th style="padding:10px 12px;text-align:left;font-size:12px;color:#666;font-weight:500">职位</th>' +
-                '<th style="padding:10px 12px;text-align:right;font-size:12px;color:#666;font-weight:500">薪资</th>' +
-                '</tr></thead><tbody>';
-
-            logs.forEach(function(l, i) {
-                var isLimit = (l.job_name || '').indexOf('[限流]') === 0;
-                var bgColor = i % 2 === 0 ? '#fff' : '#fafafa';
-                if (isLimit) bgColor = '#fff3e0';
-
-                logsHtml += '<tr style="background:' + bgColor + '">' +
-                    '<td style="padding:10px 12px;font-size:12px;color:#666;white-space:nowrap">' + (l.applied_at || '-').slice(5, 16) + '</td>' +
-                    '<td style="padding:10px 12px;font-size:13px;color:' + (isLimit ? '#e65100' : '#333') + ';font-weight:' + (isLimit ? '600' : '400') + '">' + (l.job_name || '-') + '</td>' +
-                    '<td style="padding:10px 12px;font-size:13px;color:#27ae60;font-weight:600;text-align:right;white-space:nowrap">' + (l.salary || '-') + '</td>' +
-                    '</tr>';
-            });
-
-            logsHtml += '</tbody></table></div>';
-            document.getElementById('logsContainer').innerHTML = logsHtml;
-        }
+        // 最近投递记录 - 懒加载，每次20条
+        window._statsLogsKey = code;
+        window._statsLogsOffset = 0;
+        renderLogs(data.logs || [], true);
     } catch(e) {
         document.getElementById('statsSummary').innerHTML = '<div style="color:#e74c3c;font-size:13px">请求失败: ' + e.message + '</div>';
+    }
+}
+
+// 渲染投递记录表格（append=false 时重建，true 时追加行）
+function renderLogs(logs, isFirst) {
+    var container = document.getElementById('logsContainer');
+    if (isFirst && logs.length === 0) {
+        container.innerHTML = '<div style="color:#999;font-size:13px;text-align:center;padding:20px">暂无记录</div>';
+        return;
+    }
+
+    // 记录当前已有行数（用于奇偶色计算）
+    var existingRows = 0;
+    if (isFirst) {
+        container.innerHTML = '<div style="background:#f9f9f9;border-radius:8px;overflow:hidden">' +
+            '<table id="logsTable" style="width:100%;border-collapse:collapse">' +
+            '<thead><tr style="background:#f0f0f0">' +
+            '<th style="padding:10px 12px;text-align:left;font-size:12px;color:#666;font-weight:500">时间</th>' +
+            '<th style="padding:10px 12px;text-align:left;font-size:12px;color:#666;font-weight:500">职位</th>' +
+            '<th style="padding:10px 12px;text-align:right;font-size:12px;color:#666;font-weight:500">薪资</th>' +
+            '</tr></thead><tbody id="logsTbody"></tbody></table></div>' +
+            '<div id="logsLoadMore" style="text-align:center;padding:16px"></div>';
+    } else {
+        var tbody = document.getElementById('logsTbody');
+        existingRows = tbody ? tbody.children.length : 0;
+    }
+
+    var tbody = document.getElementById('logsTbody');
+    logs.forEach(function(l, i) {
+        var rowIdx = existingRows + i;
+        var isLimit = (l.job_name || '').indexOf('[限流]') === 0;
+        var bgColor = rowIdx % 2 === 0 ? '#fff' : '#fafafa';
+        if (isLimit) bgColor = '#fff3e0';
+
+        var tr = document.createElement('tr');
+        tr.style.background = bgColor;
+        tr.innerHTML =
+            '<td style="padding:10px 12px;font-size:12px;color:#666;white-space:nowrap">' + (l.applied_at || '-').replace('T', ' ').slice(5, 16) + '</td>' +
+            '<td style="padding:10px 12px;font-size:13px;color:' + (isLimit ? '#e65100' : '#333') + ';font-weight:' + (isLimit ? '600' : '400') + '">' + (l.job_name || '-') + '</td>' +
+            '<td style="padding:10px 12px;font-size:13px;color:#27ae60;font-weight:600;text-align:right;white-space:nowrap">' + (l.salary || '-') + '</td>';
+        tbody.appendChild(tr);
+    });
+
+    window._statsLogsOffset += logs.length;
+
+    // 加载更多按钮：如果返回了满 20 条说明可能还有更多
+    var loadMoreDiv = document.getElementById('logsLoadMore');
+    if (logs.length >= 20) {
+        loadMoreDiv.innerHTML = '<button onclick="loadMoreLogs()" style="padding:8px 24px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#666;cursor:pointer;font-size:13px">加载更多</button>';
+    } else {
+        loadMoreDiv.innerHTML = logs.length > 0 ? '<div style="color:#ccc;font-size:12px">没有更多了</div>' : '';
+    }
+}
+
+// 加载更多投递记录
+async function loadMoreLogs() {
+    var loadMoreDiv = document.getElementById('logsLoadMore');
+    loadMoreDiv.innerHTML = '<div style="color:#999;font-size:12px">加载中...</div>';
+
+    try {
+        var res = await adminFetch(API_BASE + '/api/admin/stats?key=' + encodeURIComponent(window._statsLogsKey) +
+            '&offset=' + window._statsLogsOffset + '&limit=20');
+        var data = await res.json();
+        if (!data.ok) {
+            loadMoreDiv.innerHTML = '<div style="color:#e74c3c;font-size:12px">加载失败</div>';
+            return;
+        }
+        renderLogs(data.logs || [], false);
+    } catch(e) {
+        loadMoreDiv.innerHTML = '<div style="color:#e74c3c;font-size:12px">请求失败: ' + e.message + '</div>';
     }
 }
 
