@@ -1,6 +1,6 @@
 // v13 - Boss 直聘自动投递 Bookmarklet
 // v13 改进：停下后显示"继续"（接着投）和"重开"（清零重来），投递逻辑更完整
-// v12 改进：面板添加 ClawBoss 吉祥物头像，版本号弱化视觉
+// v12 改进：面板添加 ClawBoss 吉祥物头像，版本号移至面板右下角极弱化显示
 // v12 改进：解码 Boss PUA 字体加密薪资（U+E030~E039 → 0~9），修复薪资乱码
 // v11 改进：每次点击"开始投递"时先验证卡密，无效则拦截并提示
 // 通过 loader bookmarklet 从服务器加载，key 存储在 localStorage
@@ -36,10 +36,7 @@
             <div id="aa-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:24px;opacity:0.7;line-height:1">\u00d7</div>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
                 <img src="https://boss-frontend.preview.aliyun-zeabur.cn/images/clawboss-mascot.png" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.5);flex-shrink:0" alt="">
-                <div>
-                    <div style="font-size:16px;font-weight:bold;line-height:1.2">ClawBoss</div>
-                    <div style="font-size:10px;opacity:0.5;font-weight:400">v13</div>
-                </div>
+                <div style="font-size:16px;font-weight:bold;line-height:1.2">ClawBoss</div>
             </div>
             <div id="aa-key-line" style="font-size:11px;margin-bottom:10px;opacity:0.85">
                 ${currentKey ? currentKey + ' | 还能用' + remainDays + '天' : '还没给我看卡密'}
@@ -67,6 +64,7 @@
             <a href="https://boss-frontend.preview.aliyun-zeabur.cn" target="_blank"
                 style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">买卡密 / 找客服</a>
+            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13</div>
         </div>`;
     document.body.appendChild(panel);
 
