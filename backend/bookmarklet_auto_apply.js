@@ -34,8 +34,19 @@
             box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;min-width:240px;
             transition:background 0.4s ease">
             <div id="aa-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:24px;opacity:0.7;line-height:1">\u00d7</div>
+            <style>
+                @keyframes aa-shake {
+                    0%,100%{transform:translate(0,0) rotate(0)}
+                    15%{transform:translate(-2px,1px) rotate(-1deg)}
+                    30%{transform:translate(2px,-1px) rotate(1deg)}
+                    45%{transform:translate(-1px,2px) rotate(-0.5deg)}
+                    60%{transform:translate(1px,-2px) rotate(0.5deg)}
+                    75%{transform:translate(-2px,-1px) rotate(-1deg)}
+                    90%{transform:translate(2px,1px) rotate(0.5deg)}
+                }
+            </style>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                <img src="https://boss-frontend.preview.aliyun-zeabur.cn/images/clawboss-mascot.png" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.5);flex-shrink:0" alt="">
+                <img id="aa-mascot" src="https://boss-frontend.preview.aliyun-zeabur.cn/images/mascot-typing.png" style="width:42px;height:auto;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))" alt="">
                 <div style="font-size:16px;font-weight:bold;line-height:1.2">ClawBoss</div>
             </div>
             <div id="aa-key-line" style="font-size:11px;margin-bottom:10px;opacity:0.85">
@@ -67,6 +78,12 @@
             <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13</div>
         </div>`;
     document.body.appendChild(panel);
+
+    // mascot 抖动控制：投递中抖，停下不抖
+    function setMascotShake(on) {
+        var m = document.getElementById('aa-mascot');
+        if (m) m.style.animation = on ? 'aa-shake 0.4s linear infinite' : '';
+    }
 
     // 面板颜色控制
     function setPanelColor(type) {
@@ -116,7 +133,7 @@
 
     // 关闭面板
     document.getElementById('aa-close').onclick = function () {
-        running = false;
+        running = false; setMascotShake(false);
         var p = document.getElementById('aa-panel');
         if (p) p.remove();
     };
@@ -241,7 +258,7 @@
         if (btn) realClick(btn);
 
         // 停止运行
-        running = false;
+        running = false; setMascotShake(false);
         setBtnState('initial');
 
         // 面板不变色，放礼花庆祝投完了
@@ -358,6 +375,7 @@
     async function run(resetCounters) {
         if (running) return;
         running = true;
+        setMascotShake(true);
 
         if (resetCounters !== false) {
             count = 0;
@@ -376,7 +394,7 @@
         var keyCheck = await checkKeyValid();
         if (!running) return;
         if (!keyCheck.valid) {
-            running = false;
+            running = false; setMascotShake(false);
             setBtnState('initial');
             if (keyCheck.expired) {
                 // 卡密到期 → 灰色 + 输入框闪烁
@@ -405,7 +423,7 @@
         var initCards = getCards();
         if (!initCards || initCards.length === 0) {
             status('未找到职位卡片');
-            running = false;
+            running = false; setMascotShake(false);
             return;
         }
         status('找到 ' + initCards.length + ' 个职位');
@@ -488,7 +506,7 @@
             await wait(1500);
         }
 
-        running = false;
+        running = false; setMascotShake(false);
         // 正常结束（非限流）→ 面板变黄，显示暂停态按钮（可继续或重开）
         if (!document.querySelector('.chat-block-dialog')) {
             setPanelColor('yellow');
@@ -509,7 +527,7 @@
             run(false);
         } else {
             // 停下
-            running = false;
+            running = false; setMascotShake(false);
             setPanelColor('yellow');
             setBtnState('paused');
             status('已停止，投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
