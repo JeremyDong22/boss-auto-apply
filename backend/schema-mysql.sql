@@ -54,5 +54,5 @@ CREATE TABLE IF NOT EXISTS apply_logs (
 -- 全局配置（微信号、二维码等）
 CREATE TABLE IF NOT EXISTS settings (
   `key` VARCHAR(50) PRIMARY KEY,
-  value TEXT NOT NULL
+  value MEDIUMTEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
