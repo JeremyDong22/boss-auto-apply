@@ -1,4 +1,5 @@
-// v12 - Boss 直聘自动投递 Bookmarklet
+// v13 - Boss 直聘自动投递 Bookmarklet
+// v13 改进：停下后显示"继续"（接着投）和"重开"（清零重来），投递逻辑更完整
 // v12 改进：面板添加 ClawBoss 吉祥物头像，版本号弱化视觉
 // v12 改进：解码 Boss PUA 字体加密薪资（U+E030~E039 → 0~9），修复薪资乱码
 // v11 改进：每次点击"开始投递"时先验证卡密，无效则拦截并提示
@@ -37,7 +38,7 @@
                 <img src="https://boss-frontend.preview.aliyun-zeabur.cn/images/clawboss-mascot.png" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.5);flex-shrink:0" alt="">
                 <div>
                     <div style="font-size:16px;font-weight:bold;line-height:1.2">ClawBoss</div>
-                    <div style="font-size:10px;opacity:0.5;font-weight:400">v12</div>
+                    <div style="font-size:10px;opacity:0.5;font-weight:400">v13</div>
                 </div>
             </div>
             <div id="aa-key-line" style="font-size:11px;margin-bottom:10px;opacity:0.85">
@@ -243,6 +244,7 @@
 
         // 停止运行
         running = false;
+        setBtnState('initial');
 
         // 面板不变色，放礼花庆祝投完了
         fireConfetti();
@@ -320,14 +322,53 @@
         return false;
     }
 
+    // 按钮状态切换：运行中 / 已暂停 / 初始
+    function setBtnState(state) {
+        var startBtn = document.getElementById('aa-start');
+        var stopBtn = document.getElementById('aa-stop');
+        if (!startBtn || !stopBtn) return;
+
+        if (state === 'running') {
+            // 运行中：开投灰掉不可点，停下可点
+            startBtn.textContent = '开投！';
+            startBtn.style.opacity = '0.5';
+            startBtn.style.cursor = 'not-allowed';
+            startBtn.disabled = true;
+            stopBtn.textContent = '停下';
+            stopBtn.style.background = 'rgba(255,255,255,0.3)';
+        } else if (state === 'paused') {
+            // 已暂停：左边变"重开"，右边变"继续"
+            startBtn.textContent = '重开';
+            startBtn.style.opacity = '1';
+            startBtn.style.cursor = 'pointer';
+            startBtn.disabled = false;
+            stopBtn.textContent = '继续';
+            stopBtn.style.background = 'rgba(255,255,255,0.3)';
+        } else {
+            // 初始状态
+            startBtn.textContent = '开投！';
+            startBtn.style.opacity = '1';
+            startBtn.style.cursor = 'pointer';
+            startBtn.disabled = false;
+            stopBtn.textContent = '停下';
+            stopBtn.style.background = 'rgba(255,255,255,0.3)';
+        }
+    }
+
     // 主流程：无限滚动模式，全程监控限流弹窗
-    async function run() {
+    // resetCounters: true=重新开始（清零），false=继续（保留计数和位置）
+    async function run(resetCounters) {
         if (running) return;
         running = true;
-        count = 0;
-        skipped = 0;
-        idx = 0;
-        updateUI();
+
+        if (resetCounters !== false) {
+            count = 0;
+            skipped = 0;
+            idx = 0;
+            updateUI();
+        }
+
+        setBtnState('running');
 
         // 重置面板颜色
         setPanelColor('default');
@@ -338,6 +379,7 @@
         if (!running) return;
         if (!keyCheck.valid) {
             running = false;
+            setBtnState('initial');
             if (keyCheck.expired) {
                 // 卡密到期 → 灰色 + 输入框闪烁
                 setPanelColor('gray');
@@ -449,17 +491,30 @@
         }
 
         running = false;
-        // 正常结束（非限流）→ 面板变黄
+        // 正常结束（非限流）→ 面板变黄，显示暂停态按钮（可继续或重开）
         if (!document.querySelector('.chat-block-dialog')) {
             setPanelColor('yellow');
+            setBtnState('paused');
             status('完成！投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
         }
     }
 
-    document.getElementById('aa-start').onclick = run;
+    // "开投！" / "重开" 按钮：始终清零重来
+    document.getElementById('aa-start').onclick = function () {
+        run(true);
+    };
+    // "停下" / "继续" 按钮：根据当前文本切换行为
     document.getElementById('aa-stop').onclick = function () {
-        running = false;
-        setPanelColor('yellow');
-        status('已停止，投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
+        var stopBtn = document.getElementById('aa-stop');
+        if (stopBtn && stopBtn.textContent === '继续') {
+            // 继续：从当前位置接着投，不清零
+            run(false);
+        } else {
+            // 停下
+            running = false;
+            setPanelColor('yellow');
+            setBtnState('paused');
+            status('已停止，投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
+        }
     };
 })();
