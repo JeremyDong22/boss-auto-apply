@@ -630,8 +630,8 @@ app.get('/api/admin/stats', adminAuth, async (req, res) => {
         const logOffset = Math.max(parseInt(req.query.offset) || 0, 0);
 
         const [logRows] = await pool.execute(
-            'SELECT * FROM apply_logs WHERE license_code = ? ORDER BY applied_at DESC LIMIT ? OFFSET ?',
-            [keyCode, logLimit, logOffset]
+            `SELECT * FROM apply_logs WHERE license_code = ? ORDER BY applied_at DESC LIMIT ${logLimit} OFFSET ${logOffset}`,
+            [keyCode]
         );
 
         const [totalRow] = await pool.execute(
