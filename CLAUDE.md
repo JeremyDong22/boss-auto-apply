@@ -7,13 +7,22 @@ Boss 直聘（zhipin.com）自动投递简历工具。核心是一个 Bookmarkle
 
 ## 线上环境
 
+### Zeabur 部署（当前生产环境）
+| 服务 | URL | 类型 |
+|------|-----|------|
+| 前端（客户页） | https://boss-frontend.preview.aliyun-zeabur.cn | Zeabur Static |
+| 前端（管理后台） | https://boss-frontend.preview.aliyun-zeabur.cn/admin.html | Zeabur Static |
+| 后端 API | https://boss-backend.preview.aliyun-zeabur.cn | Zeabur (Node.js + Express) |
+| 数据库 | 47.108.220.1:31414 (内部网络自动连接) | Zeabur MySQL |
+| GitHub | https://github.com/JeremyDong22/boss-auto-apply (private) | |
+
+### Cloudflare 部署（旧环境，待废弃）
 | 服务 | URL | 类型 |
 |------|-----|------|
 | 前端（客户页） | https://boss-auto-apply-website.pages.dev/ | Cloudflare Pages |
 | 前端（管理后台） | https://boss-auto-apply-website.pages.dev/admin.html | Cloudflare Pages |
-| 后端 API | https://boss.smartice.ai（自定义域名，.workers.dev 国内被墙） | Cloudflare Worker |
-| 数据库 | boss-license-db (741596d0-1cdd-4969-b336-c64a605472eb) | Cloudflare D1 |
-| GitHub | https://github.com/JeremyDong22/boss-auto-apply (private) | |
+| 后端 API（旧） | https://boss.smartice.ai | Cloudflare Worker |
+| 数据库（旧） | boss-license-db | Cloudflare D1 |
 
 ## 管理员信息
 
@@ -27,14 +36,18 @@ Boss 直聘（zhipin.com）自动投递简历工具。核心是一个 Bookmarkle
 ```
 bookmarklet_auto_apply_v10.js   ← 核心投递脚本（压缩版 + 可读版在同一文件）
 backend/
-  worker-source.js              ← Cloudflare Worker 源码（生产环境）
-  build.js                      ← 构建脚本：注入 v10 代码到 worker，输出 _worker.js
-  wrangler.toml                 ← Worker 部署配置（D1 绑定）
-  schema.sql                    ← D1 数据库表结构
+  server.js                     ← Zeabur Node.js 服务器（生产环境）
+  schema-mysql.sql              ← MySQL 数据库表结构
+  package.json                  ← Node.js 依赖配置
+  .env.example                  ← 环境变量模板
+  ZEABUR_DEPLOY.md              ← Zeabur 部署指南
+  worker-source.js              ← Cloudflare Worker 源码（旧）
+  build.js                      ← 构建脚本（旧）
+  wrangler.toml                 ← Worker 部署配置（旧）
+  schema.sql                    ← D1 数据库表结构（旧）
   license_server.js             ← Node.js 本地开发服务器（端口 3456）
   manage_keys.js                ← 本地卡密管理 CLI 工具
   keys.json                     ← 本地开发数据（gitignored）
-  _worker.js                    ← 构建产物（gitignored）
 frontend/
   index.html                    ← 客户端：卡密输入 → 验证 → 获取 bookmarklet
   admin.html                    ← 管理后台：卡密管理 + 数据概览
