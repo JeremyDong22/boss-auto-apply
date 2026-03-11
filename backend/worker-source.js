@@ -1,4 +1,4 @@
-// worker-source.js - v6 - 联系方式 + 定价方案均可在 admin 后台管理
+// worker-source.js - v7 - admin/keys 接口返回 note + total_applied
 // Cloudflare Worker 版卡密验证服务器
 // 由 build.js 注入 bookmarklet 代码后生成 _worker.js 部署
 // D1 绑定名: DB
@@ -439,11 +439,17 @@ export default {
                 }
                 stats.total++;
 
+                // 查询该卡密的累计投递数
+                const applyRow = await db.prepare(
+                    'SELECT SUM(applied) as total_applied FROM daily_stats WHERE license_code = ?'
+                ).bind(key.code).first();
+
                 keys.push({
                     code: key.code, days: key.days, max_devices: key.max_devices,
                     created_at: key.created_at, activated_at: key.activated_at,
-                    disabled: !!key.disabled, status, status_label: statusLabel,
-                    remain_days: remainDays, devices: devices.results
+                    disabled: !!key.disabled, note: key.note || '', status, status_label: statusLabel,
+                    remain_days: remainDays, devices: devices.results,
+                    total_applied: applyRow?.total_applied || 0
                 });
             }
 

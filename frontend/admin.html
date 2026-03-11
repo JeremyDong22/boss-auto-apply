@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- admin.html - v5 - 新增联系方式管理（微信号 + 二维码上传） -->
+<!-- admin.html - v6 - 卡密列表直接显示投递数 -->
 <!-- Boss自动投递助手 - 管理员后台（卡密管理 + 投递追踪 + 联系方式管理） -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -691,7 +691,7 @@ function renderTable(keys) {
 
     var html = '<table class="keys-table">' +
         '<thead><tr>' +
-        '<th>卡密</th><th>备注</th><th>状态</th><th>有效期</th><th>设备</th><th>激活时间</th><th>操作</th>' +
+        '<th>卡密</th><th>备注</th><th>状态</th><th>投递数</th><th>有效期</th><th>设备</th><th>激活时间</th><th>操作</th>' +
         '</tr></thead><tbody>';
 
     keys.forEach(function(k) {
@@ -727,6 +727,7 @@ function renderTable(keys) {
             '<td><span class="key-code">' + k.code + '</span></td>' +
             '<td><span class="note-text" onclick="editNote(\'' + k.code + '\', this)" title="点击编辑" style="cursor:pointer;color:' + (k.note ? '#333' : '#ccc') + ';font-size:12px;max-width:120px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (k.note || '点击添加') + '</span></td>' +
             '<td>' + badge + '</td>' +
+            '<td><span style="cursor:pointer;color:#00bebd;font-weight:600" onclick="viewStats(\'' + k.code + '\')">' + (k.total_applied || 0) + '</span></td>' +
             '<td>' + k.days + '天</td>' +
             '<td>' + k.devices.length + '/' + k.max_devices + ' ' + devicesHtml + '</td>' +
             '<td>' + fmtDate(k.activated_at) + '</td>' +
