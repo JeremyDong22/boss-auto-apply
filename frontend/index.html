@@ -69,18 +69,8 @@
   }
   .hero-right { flex: 0 0 260px; position: relative; z-index: 1; }
   .hero-right img {
-    width: 240px; height: auto;
+    width: 260px; height: auto;
     filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
-    animation: shake 0.4s linear infinite;
-  }
-  @keyframes shake {
-    0%,100%{transform:translate(0,0) rotate(0)}
-    15%{transform:translate(-2px,1px) rotate(-1deg)}
-    30%{transform:translate(2px,-1px) rotate(1deg)}
-    45%{transform:translate(-1px,2px) rotate(-0.5deg)}
-    60%{transform:translate(1px,-2px) rotate(0.5deg)}
-    75%{transform:translate(-2px,-1px) rotate(-1deg)}
-    90%{transform:translate(2px,1px) rotate(0.5deg)}
   }
 
   /* 拖拽按钮 */
@@ -410,15 +400,12 @@
         <h1>约面交给<br><em>ClawBoss</em></h1>
         <p class="desc">你赶紧去学习。把我装进书签栏，在 Boss直聘 我帮你自动沟通所有匹配的职位，每天 150+。</p>
         <div class="drag-row">
-          <a id="dragLink" class="drag-btn" href="#" draggable="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-            拖我到书签栏
-          </a>
-          <span class="drag-hint">书签栏隐藏了？<kbd>Ctrl+Shift+B</kbd>（Mac: <kbd>Cmd+Shift+B</kbd>）</span>
+          <a id="dragLink" class="drag-btn" href="#" draggable="true">ClawBoss</a>
+          <span class="drag-hint">&larr; 拖我到书签栏 &nbsp;|&nbsp; 看不到？按 <kbd>Ctrl+Shift+B</kbd>（Mac: <kbd>Cmd+Shift+B</kbd>）</span>
         </div>
       </div>
       <div class="hero-right">
-        <img src="images/mascot-typing.png" alt="ClawBoss 吉祥物">
+        <img src="images/mascot-claw.png" alt="ClawBoss 吉祥物">
       </div>
     </div>
   </div>
@@ -499,7 +486,8 @@
 </div>
 
 <!-- ======== 定价 ======== -->
-<div class="section bg-deeper">
+<div class="section bg-deeper" style="position:relative;overflow:hidden">
+  <img src="images/mascot-handshake.png" alt="" style="position:absolute;right:20px;top:20px;width:min(220px, 18vw);height:auto;pointer-events:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.3))">
   <div class="inner">
     <div class="sec-head">
       <div class="sec-label">// pricing</div>
@@ -524,6 +512,9 @@
     <div class="sec-head" style="text-align:center;">
       <div class="sec-label">// good to know</div>
       <h2 class="sec-title">用我之前<span>要知道</span></h2>
+    </div>
+    <div style="margin-bottom:24px">
+      <img src="images/mascot-chart.png" alt="ClawBoss 图表" style="width:160px;height:auto;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.3))">
     </div>
     <div class="notes-cloud">
       <div class="note-pill">Boss直聘每天能聊的人有上限，到了我就停下来</div>
