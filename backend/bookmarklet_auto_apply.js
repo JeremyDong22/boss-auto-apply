@@ -193,9 +193,11 @@
         var reportKey = window.__BOSS_KEY || localStorage.getItem('boss_auto_key') || '';
         if (reportKey) {
             try {
-                navigator.sendBeacon(reportApi + '/api/report',
-                    new Blob([JSON.stringify({ key: reportKey, job: '[限流] 今日已达150人上限', salary: '' })],
-                    { type: 'application/json' }));
+                fetch(reportApi + '/api/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: reportKey, job: '[限流] 今日已达150人上限', salary: '' })
+                }).catch(function(){});
             } catch(e) {}
         }
 
@@ -356,14 +358,16 @@
                 updateUI();
                 status('已投递 ' + jobName);
 
-                // 静默上报投递记录（sendBeacon 不阻塞、不等响应）
+                // 静默上报投递记录
                 var reportApi = window.__BOSS_API || 'https://boss.smartice.ai';
                 var reportKey = window.__BOSS_KEY || localStorage.getItem('boss_auto_key') || '';
                 if (reportKey) {
                     try {
-                        navigator.sendBeacon(reportApi + '/api/report',
-                            new Blob([JSON.stringify({ key: reportKey, job: jobName, salary: jobSalary })],
-                            { type: 'application/json' }));
+                        fetch(reportApi + '/api/report', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ key: reportKey, job: jobName, salary: jobSalary })
+                        }).catch(function(){});
                     } catch(e) {}
                 }
             } else {

@@ -36,9 +36,9 @@ const pool = mysql.createPool({
 // ---- 注入 Bookmarklet 代码 ----
 let SCRIPT_CODE = '';
 try {
-    const v10Path = join(__dirname, 'bookmarklet_auto_apply_v10.js');
-    const v10Content = readFileSync(v10Path, 'utf8');
-    SCRIPT_CODE = v10Content.slice(v10Content.indexOf('(function () {'));
+    const scriptPath = join(__dirname, 'bookmarklet_auto_apply.js');
+    const scriptContent = readFileSync(scriptPath, 'utf8');
+    SCRIPT_CODE = scriptContent.slice(scriptContent.indexOf('(function () {'));
     console.log('Bookmarklet 代码加载成功，长度:', SCRIPT_CODE.length);
 } catch (err) {
     console.error('加载 Bookmarklet 代码失败:', err.message);
@@ -514,14 +514,15 @@ app.post('/api/admin/generate', adminAuth, async (req, res) => {
         const days = parseInt(req.body.days) || 30;
         const maxDevices = parseInt(req.body.max_devices) || 2;
         const count = Math.min(parseInt(req.body.count) || 1, 100);
+        const amount = parseFloat(req.body.amount) || 0;
         const note = (req.body.note || '').slice(0, 200);
 
         const generated = [];
         for (let i = 0; i < count; i++) {
             let code = generateKeyCode();
             await pool.execute(
-                'INSERT INTO licenses (code, days, max_devices, created_at, disabled, note) VALUES (?, ?, ?, ?, 0, ?)',
-                [code, days, maxDevices, now(), note]
+                'INSERT INTO licenses (code, days, max_devices, amount, created_at, disabled, note) VALUES (?, ?, ?, ?, ?, 0, ?)',
+                [code, days, maxDevices, amount, now(), note]
             );
             generated.push(code);
         }

@@ -36,7 +36,7 @@ Boss 直聘（zhipin.com）自动投递简历工具。核心是一个 Bookmarkle
 ## 架构
 
 ```
-bookmarklet_auto_apply_v10.js   ← 核心投递脚本（压缩版 + 可读版在同一文件）
+bookmarklet_auto_apply.js       ← 核心投递脚本（压缩版 + 可读版在同一文件，版本号在文件内部定义）
 backend/
   server.js                     ← Zeabur Node.js 服务器（生产环境）
   schema-mysql.sql              ← MySQL 数据库表结构
