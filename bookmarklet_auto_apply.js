@@ -31,22 +31,22 @@
             box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;min-width:240px;
             transition:background 0.4s ease">
             <div id="aa-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:24px;opacity:0.7;line-height:1">\u00d7</div>
-            <div style="font-size:16px;font-weight:bold;margin-bottom:8px">Boss 自动投递 v11</div>
+            <div style="font-size:16px;font-weight:bold;margin-bottom:8px">ClawBoss v11</div>
             <div id="aa-key-line" style="font-size:11px;margin-bottom:10px;opacity:0.85">
-                ${currentKey ? currentKey + ' | 剩余' + remainDays + '天' : '未授权'}
+                ${currentKey ? currentKey + ' | 还能用' + remainDays + '天' : '还没给我看卡密'}
             </div>
-            <div style="font-size:13px;margin-bottom:6px">已投递: <b id="aa-count">0</b> 个</div>
-            <div style="font-size:13px;margin-bottom:6px">已跳过: <b id="aa-skipped">0</b> 个</div>
-            <div style="font-size:13px;margin-bottom:12px">已遍历: <b id="aa-total">0</b> 个</div>
-            <div id="aa-status" style="font-size:12px;margin-bottom:12px;opacity:0.9">点击开始按钮启动</div>
+            <div style="font-size:13px;margin-bottom:6px">帮你约了: <b id="aa-count">0</b> 个</div>
+            <div style="font-size:13px;margin-bottom:6px">跳过了: <b id="aa-skipped">0</b> 个</div>
+            <div style="font-size:13px;margin-bottom:12px">看过了: <b id="aa-total">0</b> 个</div>
+            <div id="aa-status" style="font-size:12px;margin-bottom:12px;opacity:0.9">点下面按钮让我开始</div>
             <div style="display:flex;gap:8px;margin-bottom:10px">
                 <button id="aa-start" style="flex:1;padding:8px;border:none;border-radius:6px;
-                    background:white;color:#00bebd;font-weight:bold;cursor:pointer;font-size:14px">开始投递</button>
+                    background:white;color:#00bebd;font-weight:bold;cursor:pointer;font-size:14px">开投！</button>
                 <button id="aa-stop" style="flex:1;padding:8px;border:none;border-radius:6px;
-                    background:rgba(255,255,255,0.3);color:white;font-weight:bold;cursor:pointer;font-size:14px">停止</button>
+                    background:rgba(255,255,255,0.3);color:white;font-weight:bold;cursor:pointer;font-size:14px">停下</button>
             </div>
             <div style="border-top:1px solid rgba(255,255,255,0.3);padding-top:10px;display:flex;gap:6px">
-                <input id="aa-new-key" type="text" placeholder="输入新卡密" maxlength="14"
+                <input id="aa-new-key" type="text" placeholder="新卡密" maxlength="14"
                     style="flex:1;padding:5px 8px;border:1px solid rgba(255,255,255,0.4);border-radius:4px;
                     background:rgba(255,255,255,0.15);color:white;font-size:12px;font-family:monospace;
                     outline:none;text-transform:uppercase" autocomplete="off" spellcheck="false">
@@ -57,7 +57,7 @@
             <div id="aa-key-msg" style="font-size:11px;margin-top:6px;display:none"></div>
             <a href="https://boss-frontend.preview.aliyun-zeabur.cn" target="_blank"
                 style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
-                onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">官网 / 购买卡密 / 联系客服</a>
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">买卡密 / 找客服</a>
         </div>`;
     document.body.appendChild(panel);
 
