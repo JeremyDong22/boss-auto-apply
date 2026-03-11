@@ -448,6 +448,16 @@
     transform: scale(1.05);
   }
 
+  /* 刷新按钮旋转动画 */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .spinning {
+    display: inline-block;
+    animation: spin 0.6s linear;
+  }
+
   @media (max-width: 640px) {
     .container { padding: 16px 12px; }
     .generate-form { flex-direction: column; align-items: stretch; }
@@ -556,7 +566,12 @@
 
   <!-- 卡密列表 -->
   <div class="keys-section">
-    <h2>卡密列表</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h2 style="margin:0">卡密列表</h2>
+      <button class="action-btn" onclick="loadData()" style="padding:6px 14px;font-size:12px">
+        <span id="refreshIcon">🔄</span> 刷新
+      </button>
+    </div>
     <div id="keysTableContainer">
       <div class="empty-state">加载中...</div>
     </div>
@@ -680,6 +695,13 @@ function decodeFp(fp) {
 
 // 加载数据
 async function loadData() {
+    // 添加刷新动画
+    var icon = document.getElementById('refreshIcon');
+    if (icon) {
+        icon.classList.add('spinning');
+        setTimeout(function() { icon.classList.remove('spinning'); }, 600);
+    }
+
     try {
         var res = await adminFetch(API_BASE + '/api/admin/keys');
         var data = await res.json();
@@ -1124,10 +1146,29 @@ async function saveContact() {
 }
 
 // 初始加载：已登录则加载数据，否则显示登录
+var autoRefreshTimer = null;
+
+function startAutoRefresh() {
+    // 清除旧的定时器
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    // 每30秒自动刷新
+    autoRefreshTimer = setInterval(function() {
+        loadData();
+    }, 30000);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+    }
+}
+
 if (getAdminPw()) {
     document.getElementById('loginOverlay').classList.add('hidden');
     loadData();
     loadContact();
+    startAutoRefresh(); // 启动自动刷新
 }
 </script>
 </body>
