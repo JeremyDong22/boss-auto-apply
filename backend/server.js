@@ -514,7 +514,7 @@ app.post('/api/admin/generate', adminAuth, async (req, res) => {
         const days = parseInt(req.body.days) || 30;
         const maxDevices = parseInt(req.body.max_devices) || 2;
         const count = Math.min(parseInt(req.body.count) || 1, 100);
-        const amount = parseFloat(req.body.amount) || 0;
+        const amount = (parseFloat(req.body.amount) || 0).toFixed(2);
         const note = (req.body.note || '').slice(0, 200);
 
         const generated = [];
