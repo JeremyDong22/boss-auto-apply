@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- index.html - v6 - ClawBoss 拟人化版本 -->
+<!-- index.html - v8 - 重构布局：全宽 section 交替底色，统一容器宽度，视觉一致 -->
 <!-- ClawBoss - 你的求职小助手 -->
 <!-- 卡密输入在书签 app 内完成，网站不需要输入卡密 -->
 <meta charset="UTF-8">
@@ -17,70 +17,109 @@
     min-height: 100vh;
   }
 
-  /* Hero */
-  .hero {
+  /* 统一容器 */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* 全宽 section 条带 */
+  .band {
+    padding: 64px 0;
+  }
+  .band--hero {
     background: linear-gradient(135deg, #00bebd, #009e9d);
     color: #fff;
+    padding: 72px 0;
+  }
+  .band--white { background: #fff; }
+  .band--gray { background: #f0f2f5; }
+  .band--tint { background: #f7fafa; }
+
+  /* Hero */
+  .hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+  }
+  .hero-content { flex: 1; }
+  .hero-content h1 { font-size: 40px; font-weight: 800; margin-bottom: 12px; }
+  .hero-content p { font-size: 18px; opacity: 0.92; line-height: 1.7; }
+  .hero-image { flex: 0 0 180px; }
+  .hero-image img {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255,255,255,0.4);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+
+  /* Section 标题 */
+  .band-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 32px;
     text-align: center;
-    padding: 60px 20px 48px;
   }
-  .hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 10px; }
-  .hero p { font-size: 16px; opacity: 0.9; max-width: 480px; margin: 0 auto; line-height: 1.6; }
+  .band-title span { color: #00bebd; }
 
-  .main {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 24px 20px 60px;
+  /* How it works - 3 cards */
+  .how-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
   }
-
-  .section {
+  .how-card {
     background: #fff;
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+    border-radius: 14px;
+    padding: 40px 24px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   }
-  .section h2 {
+  .how-card .num {
+    display: inline-flex;
+    width: 40px; height: 40px;
+    background: #00bebd;
+    color: #fff;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .how-card h3 { font-size: 16px; color: #333; margin-bottom: 8px; }
+  .how-card p { font-size: 14px; color: #888; line-height: 1.6; }
+
+  /* Install - 左右两栏：安装 + 使用步骤 */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .card h2 {
     font-size: 18px;
     color: #00bebd;
     margin-bottom: 14px;
     padding-bottom: 10px;
     border-bottom: 1px solid #f0f0f0;
   }
-  .section p { line-height: 1.7; font-size: 14px; }
-  .section ul { padding-left: 20px; line-height: 2; font-size: 14px; }
-  .section a { color: #00bebd; text-decoration: none; }
-  .section a:hover { text-decoration: underline; }
+  .card p { line-height: 1.7; font-size: 14px; }
+  .card ul { padding-left: 20px; line-height: 2; font-size: 14px; }
+  .card a { color: #00bebd; text-decoration: none; }
+  .card a:hover { text-decoration: underline; }
   .note { color: #999; font-size: 12px; margin-top: 10px; }
-
-  /* How it works - 3 cards */
-  .how-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .how-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 24px 16px;
-    text-align: center;
-    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  }
-  .how-card .num {
-    display: inline-flex;
-    width: 36px; height: 36px;
-    background: #00bebd;
-    color: #fff;
-    border-radius: 50%;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-  .how-card h3 { font-size: 15px; color: #333; margin-bottom: 6px; }
-  .how-card p { font-size: 13px; color: #888; line-height: 1.5; }
 
   /* Drag area */
   .drag-area {
@@ -99,7 +138,7 @@
     font-weight: 600;
     text-decoration: none !important;
     cursor: grab;
-    -webkit-user-drag: element; /* Chrome/Safari 明确允许拖拽 */
+    -webkit-user-drag: element;
     box-shadow: 0 3px 12px rgba(0,190,189,0.35);
     transition: box-shadow 0.2s, transform 0.2s;
     white-space: nowrap;
@@ -145,18 +184,20 @@
   .pricing-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-top: 14px;
+    gap: 16px;
+    margin-top: 16px;
   }
   .price-card {
+    background: #fff;
     border: 2px solid #eee;
-    border-radius: 10px;
-    padding: 20px 12px;
+    border-radius: 12px;
+    padding: 28px 16px;
     text-align: center;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }
-  .price-card { cursor: pointer; }
-  .price-card:hover { border-color: #00bebd; }
+  .price-card:hover { border-color: #00bebd; box-shadow: 0 4px 16px rgba(0,190,189,0.15); }
   .price-card.popular { border-color: #00bebd; position: relative; }
   .price-card.popular::before {
     content: '推荐';
@@ -166,136 +207,185 @@
     font-size: 11px; font-weight: 600;
     padding: 2px 10px; border-radius: 8px;
   }
-  .price-card .duration { font-size: 14px; color: #666; margin-bottom: 8px; }
-  .price-card .price { font-size: 28px; font-weight: 700; color: #00bebd; }
+  .price-card .duration { font-size: 15px; color: #666; margin-bottom: 10px; }
+  .price-card .price { font-size: 32px; font-weight: 700; color: #00bebd; }
   .price-card .price span { font-size: 14px; font-weight: 400; color: #999; }
-  .price-card .unit { font-size: 12px; color: #999; margin-top: 4px; }
+  .price-card .unit { font-size: 13px; color: #999; margin-top: 6px; }
+
+  /* Pricing 描述 */
+  .pricing-desc {
+    text-align: center;
+    font-size: 15px;
+    color: #666;
+    line-height: 1.7;
+  }
+
+  /* Notes 列表横排 */
+  .notes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 28px;
+  }
+  .notes-grid li {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #555;
+  }
 
   .footer {
     text-align: center;
     color: #bbb;
     font-size: 12px;
-    padding: 16px 0 8px;
+    padding: 24px 0 12px;
   }
 
+  /* 移动端 */
   @media (max-width: 640px) {
-    .hero { padding: 40px 16px 32px; }
-    .hero h1 { font-size: 22px; }
-    .main { padding: 16px 12px 40px; }
-    .section { padding: 18px 16px; }
-    .how-cards { grid-template-columns: 1fr; }
+    .container { padding: 0 16px; }
+    .band { padding: 40px 0; }
+    .band--hero { padding: 44px 0; }
+    .hero-inner { flex-direction: column; text-align: center; gap: 20px; }
+    .hero-content h1 { font-size: 28px; }
+    .hero-content p { font-size: 16px; }
+    .hero-image { flex: 0 0 130px; }
+    .hero-image img { width: 130px; height: 130px; }
+    .how-cards { grid-template-columns: 1fr; gap: 12px; }
+    .two-col { grid-template-columns: 1fr; gap: 16px; }
+    .card { padding: 20px 16px; }
     .pricing-cards { grid-template-columns: 1fr; }
+    .notes-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
 <!-- Hero -->
-<div class="hero">
-  <h1>ClawBoss</h1>
-  <p>约面交给我，你赶紧去学习</p>
+<div class="band band--hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <h1>ClawBoss</h1>
+        <p>约面交给我，你赶紧去学习</p>
+      </div>
+      <div class="hero-image">
+        <img src="images/clawboss-mascot.png" alt="ClawBoss 吉祥物">
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="main">
-
-  <!-- How it works -->
-  <div class="how-cards">
-    <div class="how-card">
-      <div class="num">1</div>
-      <h3>把我装进书签</h3>
-      <p>拖拽按钮到书签栏<br>我就住进你浏览器了</p>
-    </div>
-    <div class="how-card">
-      <div class="num">2</div>
-      <h3>给我看卡密</h3>
-      <p>点击书签后输入卡密<br>我就知道你是谁了</p>
-    </div>
-    <div class="how-card">
-      <div class="num">3</div>
-      <h3>我帮你约面</h3>
-      <p>点击开始我就出发<br>你去学习等消息</p>
-    </div>
-  </div>
-
-  <!-- Install -->
-  <div class="section">
-    <h2>把我装进书签栏</h2>
-    <p>把下面这个按钮<b>拖</b>到浏览器书签栏，我就住进去了。卡密等会儿用的时候再给我看。</p>
-    <div class="drag-area">
-      <a id="dragLink" class="drag-btn" href="#" draggable="true">ClawBoss</a>
-      <span class="drag-hint">&larr; 拖我到书签栏</span>
-    </div>
-    <p class="note">看不到书签栏？按 Ctrl+Shift+B（Mac: Cmd+Shift+B）就出来了。</p>
-  </div>
-
-  <!-- Steps -->
-  <div class="section">
-    <h2>怎么用我</h2>
-    <div class="steps">
-      <div class="step">
-        <span class="step-num">1</span>
-        <div>
-          <strong>确认浏览器</strong>
-          <p>我只能在 Chrome、Edge、360、QQ、搜狗这些浏览器里工作。</p>
-          <details class="browser-details">
-            <summary>看看我支持哪些浏览器</summary>
-            <table class="compat-table">
-              <tr><th>浏览器</th><th>能用吗</th><th>备注</th></tr>
-              <tr><td>Chrome</td><td class="yes">能用</td><td>推荐</td></tr>
-              <tr><td>Edge</td><td class="yes">能用</td><td></td></tr>
-              <tr><td>360浏览器</td><td class="yes">能用</td><td>极速模式</td></tr>
-              <tr><td>QQ浏览器</td><td class="yes">能用</td><td></td></tr>
-              <tr><td>搜狗浏览器</td><td class="yes">能用</td><td></td></tr>
-              <tr><td>Firefox</td><td class="yes">能用</td><td></td></tr>
-            </table>
-          </details>
-        </div>
+<!-- How it works -->
+<div class="band band--white">
+  <div class="container">
+    <div class="band-title">三步开始，<span>超简单</span></div>
+    <div class="how-cards">
+      <div class="how-card">
+        <div class="num">1</div>
+        <h3>把我装进书签</h3>
+        <p>拖拽按钮到书签栏<br>我就住进你浏览器了</p>
       </div>
-      <div class="step">
-        <span class="step-num">2</span>
-        <div>
-          <strong>打开 Boss直聘</strong>
-          <p>去 <a href="https://www.zhipin.com/web/geek/jobs" target="_blank" rel="noopener">Boss直聘职位列表页</a>，先筛选好你想要的职位（城市、岗位、薪资这些）。</p>
-        </div>
+      <div class="how-card">
+        <div class="num">2</div>
+        <h3>给我看卡密</h3>
+        <p>点击书签后输入卡密<br>我就知道你是谁了</p>
       </div>
-      <div class="step">
-        <span class="step-num">3</span>
-        <div>
-          <strong>点我，给我看卡密</strong>
-          <p>点书签栏里的「ClawBoss」，第一次用会问你要卡密，输进去就行。我会记住的，下次不用再输。</p>
-        </div>
-      </div>
-      <div class="step">
-        <span class="step-num">4</span>
-        <div>
-          <strong>让我开始干活</strong>
-          <p>面板出来后点「开始」，我就去帮你约面了。你可以看到卡密还能用几天，也可以随时换新卡密。</p>
-        </div>
+      <div class="how-card">
+        <div class="num">3</div>
+        <h3>我帮你约面</h3>
+        <p>点击开始我就出发<br>你去学习等消息</p>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Pricing -->
-  <div class="section">
-    <h2>买张卡密</h2>
-    <p>买了卡密，在 Boss直聘 页面点我，输入卡密就能用了。</p>
+<!-- Install + Steps 双栏 -->
+<div class="band band--gray">
+  <div class="container">
+    <div class="two-col">
+      <!-- 安装 -->
+      <div class="card">
+        <h2>把我装进书签栏</h2>
+        <p>把下面这个按钮<b>拖</b>到浏览器书签栏，我就住进去了。卡密等会儿用的时候再给我看。</p>
+        <div class="drag-area">
+          <a id="dragLink" class="drag-btn" href="#" draggable="true">ClawBoss</a>
+          <span class="drag-hint">&larr; 拖我到书签栏</span>
+        </div>
+        <p class="note">看不到书签栏？按 Ctrl+Shift+B（Mac: Cmd+Shift+B）就出来了。</p>
+      </div>
+
+      <!-- 使用步骤 -->
+      <div class="card">
+        <h2>怎么用我</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-num">1</span>
+            <div>
+              <strong>确认浏览器</strong>
+              <p>我只能在 Chrome、Edge、360、QQ、搜狗这些浏览器里工作。</p>
+              <details class="browser-details">
+                <summary>看看我支持哪些浏览器</summary>
+                <table class="compat-table">
+                  <tr><th>浏览器</th><th>能用吗</th><th>备注</th></tr>
+                  <tr><td>Chrome</td><td class="yes">能用</td><td>推荐</td></tr>
+                  <tr><td>Edge</td><td class="yes">能用</td><td></td></tr>
+                  <tr><td>360浏览器</td><td class="yes">能用</td><td>极速模式</td></tr>
+                  <tr><td>QQ浏览器</td><td class="yes">能用</td><td></td></tr>
+                  <tr><td>搜狗浏览器</td><td class="yes">能用</td><td></td></tr>
+                  <tr><td>Firefox</td><td class="yes">能用</td><td></td></tr>
+                </table>
+              </details>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <div>
+              <strong>打开 Boss直聘</strong>
+              <p>去 <a href="https://www.zhipin.com/web/geek/jobs" target="_blank" rel="noopener">Boss直聘职位列表页</a>，先筛选好你想要的职位（城市、岗位、薪资这些）。</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <div>
+              <strong>点我，给我看卡密</strong>
+              <p>点书签栏里的「ClawBoss」，第一次用会问你要卡密，输进去就行。我会记住的，下次不用再输。</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-num">4</span>
+            <div>
+              <strong>让我开始干活</strong>
+              <p>面板出来后点「开始」，我就去帮你约面了。你可以看到卡密还能用几天，也可以随时换新卡密。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pricing -->
+<div class="band band--white">
+  <div class="container">
+    <div class="band-title">买张<span>卡密</span></div>
+    <p class="pricing-desc">买了卡密，在 Boss直聘 页面点我，输入卡密就能用了。</p>
     <div class="pricing-cards" id="pricingCards">
-      <!-- 从后端动态加载 -->
       <div style="text-align:center;color:#999;font-size:13px;padding:20px 0">加载定价中...</div>
     </div>
     <!-- 联系方式（从后端动态加载） -->
-    <div id="contactArea" style="margin-top:18px;text-align:center;display:none">
-      <div style="width:100%;height:1px;background:#f0f0f0;margin-bottom:14px"></div>
+    <div id="contactArea" style="margin-top:24px;text-align:center;display:none">
+      <div style="width:100%;height:1px;background:#f0f0f0;margin-bottom:16px"></div>
       <p style="font-size:14px;color:#666;margin-bottom:10px">加微信买卡密：</p>
       <p id="contactWechatId" style="font-size:18px;font-weight:700;color:#00bebd;font-family:monospace;letter-spacing:1px;margin-bottom:10px"></p>
       <img id="contactQrcode" style="max-width:200px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);display:none" alt="微信二维码">
     </div>
   </div>
+</div>
 
-  <!-- Notes -->
-  <div class="section">
-    <h2>用我之前要知道</h2>
-    <ul>
+<!-- Notes -->
+<div class="band band--tint">
+  <div class="container">
+    <div class="band-title">用我之前<span>要知道</span></div>
+    <ul class="notes-grid">
       <li>Boss直聘每天能聊的人有上限，到了我就停下来。</li>
       <li>干活的时候你可以随时点「停止」让我歇会儿。</li>
       <li>聊过的职位我会跳过，不会重复打招呼。</li>
@@ -303,8 +393,13 @@
       <li>卡密绑定你的设备，别给别人用哦。</li>
     </ul>
   </div>
+</div>
 
-  <div class="footer">ClawBoss - 约面交给我，你赶紧去学习</div>
+<!-- Footer -->
+<div class="band" style="padding:20px 0;background:#f0f2f5;">
+  <div class="container">
+    <div class="footer">ClawBoss - 约面交给我，你赶紧去学习</div>
+  </div>
 </div>
 
 <div id="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:#333;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:9999;transition:transform 0.3s;pointer-events:none"></div>
