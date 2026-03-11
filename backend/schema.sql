@@ -1,5 +1,6 @@
--- schema.sql - v2
+-- schema.sql - v3
 -- Boss 自动投递 - D1 数据库表结构
+-- 新增 settings 表存储微信号和二维码等配置
 -- 部署后在 Cloudflare Dashboard > D1 > 你的数据库 > Console 中执行
 
 CREATE TABLE IF NOT EXISTS licenses (
@@ -8,7 +9,8 @@ CREATE TABLE IF NOT EXISTS licenses (
   max_devices INTEGER NOT NULL DEFAULT 2,
   created_at TEXT NOT NULL,
   activated_at TEXT,
-  disabled INTEGER NOT NULL DEFAULT 0
+  disabled INTEGER NOT NULL DEFAULT 0,
+  note TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS devices (
@@ -42,4 +44,10 @@ CREATE TABLE IF NOT EXISTS apply_logs (
   job_name TEXT,
   salary TEXT,
   applied_at TEXT NOT NULL
+);
+
+-- 全局配置（微信号、二维码等）
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
 );

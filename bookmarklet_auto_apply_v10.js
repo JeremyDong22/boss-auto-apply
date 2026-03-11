@@ -30,7 +30,7 @@
             padding:16px 20px;border-radius:12px;
             box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;min-width:240px">
             <div id="aa-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:24px;opacity:0.7;line-height:1">\u00d7</div>
-            <div style="font-size:16px;font-weight:bold;margin-bottom:8px">Boss 自动投递 v10</div>
+            <div style="font-size:16px;font-weight:bold;margin-bottom:8px">Boss 自动投递 v11</div>
             <div id="aa-key-line" style="font-size:11px;margin-bottom:10px;opacity:0.85">
                 ${currentKey ? currentKey + ' | 剩余' + remainDays + '天' : '未授权'}
             </div>

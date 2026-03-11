@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- index.html - v4 -->
+<!-- index.html - v5 - 超薄 loader 重构，书签仅 ~120 字符，UI 从服务器拉取 -->
 <!-- Boss自动投递助手 - 产品落地页（介绍 + 安装书签 + 获取卡密） -->
 <!-- 卡密输入在书签 app 内完成，网站不需要输入卡密 -->
 <meta charset="UTF-8">
@@ -278,24 +278,17 @@
   <div class="section">
     <h2>获取卡密</h2>
     <p>购买卡密后，在 Boss直聘 页面点击书签输入即可使用。</p>
-    <div class="pricing-cards">
-      <div class="price-card">
-        <div class="duration">体验卡</div>
-        <div class="price">1<span>元</span></div>
-        <div class="unit">1天</div>
-      </div>
-      <div class="price-card popular">
-        <div class="duration">周卡</div>
-        <div class="price">5<span>元</span></div>
-        <div class="unit">7天</div>
-      </div>
-      <div class="price-card">
-        <div class="duration">月卡</div>
-        <div class="price">15<span>元</span></div>
-        <div class="unit">30天</div>
-      </div>
+    <div class="pricing-cards" id="pricingCards">
+      <!-- 从后端动态加载 -->
+      <div style="text-align:center;color:#999;font-size:13px;padding:20px 0">加载定价中...</div>
     </div>
-    <p class="note" style="margin-top:14px;text-align:center">求 Jeremy，Jeremy 会免费给你</p>
+    <!-- 联系方式（从后端动态加载） -->
+    <div id="contactArea" style="margin-top:18px;text-align:center;display:none">
+      <div style="width:100%;height:1px;background:#f0f0f0;margin-bottom:14px"></div>
+      <p style="font-size:14px;color:#666;margin-bottom:10px">添加微信购买卡密：</p>
+      <p id="contactWechatId" style="font-size:18px;font-weight:700;color:#00bebd;font-family:monospace;letter-spacing:1px;margin-bottom:10px"></p>
+      <img id="contactQrcode" style="max-width:200px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);display:none" alt="微信二维码">
+    </div>
   </div>
 
   <!-- Notes -->
@@ -328,85 +321,68 @@ var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.
     ? 'http://localhost:3456'
     : 'https://boss-auto-apply-api.hengd2.workers.dev';
 
-// 生成通用 loader bookmarklet（无 key bake）
-// 执行时：localStorage 有 key → 直接验证加载；无 key → 弹出登录面板输入
+// 超薄 loader bookmarklet（~120字符）
+// 所有 UI 和逻辑从 /api/loader 拉取，修改登录面板无需用户重新拖书签
 function buildLoaderBookmarklet() {
     var api = API_BASE;
-    var url = "javascript:void(function(){" +
-        "var k=localStorage.getItem('boss_auto_key');" +
-        "var api='" + api + "';" +
-        // load 函数：验证 key → 成功则注入 v10 脚本
-        "function ld(key){" +
-            "var fp=btoa(screen.width+'|'+screen.height+'|'+screen.colorDepth+'|'+navigator.language+'|'+new Date().getTimezoneOffset()+'|'+navigator.platform);" +
-            "window.__BOSS_KEY=key;window.__BOSS_API=api;" +
-            "var btn=document.getElementById('aa-login-btn');" +
-            "if(btn){btn.textContent='\\u9a8c\\u8bc1\\u4e2d...';btn.disabled=true}" +
-            "fetch(api+'/api/verify?key='+key+'&fp='+encodeURIComponent(fp))" +
-            ".then(function(r){return r.json()})" +
-            ".then(function(d){" +
-                "if(!d.ok){" +
-                    "localStorage.removeItem('boss_auto_key');" +
-                    "var ee=document.getElementById('aa-login-err');" +
-                    "if(ee){ee.textContent=d.msg;ee.style.display='block'}" +
-                    "else{alert('Boss\\u81ea\\u52a8\\u6295\\u9012: '+d.msg)}" +
-                    "if(btn){btn.textContent='\\u6fc0\\u6d3b';btn.disabled=false}" +
-                    "return}" +
-                "window.__BOSS_INFO=d.info;" +
-                "var el=document.getElementById('aa-login');if(el)el.remove();" +
-                "var s=document.createElement('script');s.textContent=d.code;document.head.appendChild(s)" +
-            "})" +
-            ".catch(function(e){" +
-                "var ee=document.getElementById('aa-login-err');" +
-                "if(ee){ee.textContent='\\u8fde\\u63a5\\u670d\\u52a1\\u5668\\u5931\\u8d25';ee.style.display='block'}" +
-                "else{alert('\\u8fde\\u63a5\\u670d\\u52a1\\u5668\\u5931\\u8d25')}" +
-                "if(btn){btn.textContent='\\u6fc0\\u6d3b';btn.disabled=false}" +
-            "})}" +
-        // 有 key → 直接加载
-        "if(k){ld(k);return}" +
-        // 无 key → 显示登录面板
-        "var old=document.getElementById('aa-login');if(old)old.remove();" +
-        "var d=document.createElement('div');d.id='aa-login';" +
-        "d.innerHTML='" +
-            "<div style=\"position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:99998\"></div>" +
-            "<div style=\"position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;background:#fff;padding:36px 32px;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.25);font-family:system-ui;text-align:center;min-width:320px\">" +
-                "<div id=\"aa-login-close\" style=\"position:absolute;top:10px;right:14px;cursor:pointer;font-size:28px;color:#999;line-height:1;font-weight:300\">\\u00d7</div>" +
-                "<div style=\"font-size:22px;font-weight:bold;color:#00bebd;margin-bottom:6px\">Boss \\u81ea\\u52a8\\u6295\\u9012</div>" +
-                "<div style=\"color:#999;font-size:13px;margin-bottom:20px\">\\u8bf7\\u8f93\\u5165\\u5361\\u5bc6\\u6fc0\\u6d3b\\u4f7f\\u7528</div>" +
-                "<input id=\"aa-login-input\" type=\"text\" placeholder=\"BOSS-XXXX-XXXX\" maxlength=\"14\" style=\"width:100%;padding:13px;border:2px solid #eee;border-radius:8px;font-size:17px;font-family:monospace;text-align:center;text-transform:uppercase;outline:none;box-sizing:border-box;transition:border-color 0.2s\" autocomplete=\"off\" spellcheck=\"false\">" +
-                "<div id=\"aa-login-err\" style=\"color:#e74c3c;font-size:13px;margin-top:10px;display:none\"></div>" +
-                "<button id=\"aa-login-btn\" style=\"width:100%;padding:13px;margin-top:14px;background:linear-gradient(135deg,#00bebd,#00a8a7);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:opacity 0.2s\">\\u6fc0\\u6d3b</button>" +
-                "<div style=\"color:#bbb;font-size:11px;margin-top:12px\">\\u5361\\u5bc6\\u5c06\\u81ea\\u52a8\\u8bb0\\u4f4f\\uff0c\\u4e0b\\u6b21\\u65e0\\u9700\\u91cd\\u590d\\u8f93\\u5165</div>" +
-            "</div>" +
-        "';" +
-        "document.body.appendChild(d);" +
-        "var inp=document.getElementById('aa-login-input');inp.focus();" +
-        // 自动格式化输入
-        "inp.oninput=function(){" +
-            "var v=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');" +
-            "if(v.length>4&&v.slice(0,4)==='BOSS')v=v.slice(0,4)+'-'+v.slice(4);" +
-            "if(v.length>9&&v.charAt(9)!=='-')v=v.slice(0,9)+'-'+v.slice(9);" +
-            "this.value=v.slice(0,14)};" +
-        // 点击激活
-        "document.getElementById('aa-login-btn').onclick=function(){" +
-            "var v=document.getElementById('aa-login-input').value.trim().toUpperCase();" +
-            "var err=document.getElementById('aa-login-err');" +
-            "if(!v){err.textContent='\\u8bf7\\u8f93\\u5165\\u5361\\u5bc6';err.style.display='block';return}" +
-            "err.style.display='none';" +
-            "localStorage.setItem('boss_auto_key',v);ld(v)};" +
-        // 回车触发
-        "document.getElementById('aa-login-input').onkeydown=function(e){if(e.key==='Enter')document.getElementById('aa-login-btn').click()};" +
-        // 点遮罩或 X 关闭
-        "d.firstChild.onclick=function(){d.remove()};" +
-        "document.getElementById('aa-login-close').onclick=function(){d.remove()}" +
-    "}())";
-    // CSS 里的 % (如 width:100%, translate(-50%,-50%)) 在 javascript: URL 中
-    // 会被浏览器当成 URL percent-encoding 前缀，导致解析失败
-    // 编码为 %25，浏览器解码后还原为 %
-    return url.replace(/%/g, '%25');
+    return "javascript:void(fetch('" + api + "/api/loader').then(r=>r.text()).then(eval).catch(e=>alert('加载失败:'+e.message)))";
 }
 
 // 页面加载时直接设置书签链接
 document.getElementById('dragLink').href = buildLoaderBookmarklet();
+
+// 加载联系方式 + 定价
+fetch(API_BASE + '/api/contact').then(function(r) { return r.json(); }).then(function(d) {
+    if (!d.ok) return;
+    // 联系方式
+    var area = document.getElementById('contactArea');
+    if (d.wechat_id) {
+        document.getElementById('contactWechatId').textContent = d.wechat_id;
+        area.style.display = 'block';
+    }
+    if (d.wechat_qrcode) {
+        var img = document.getElementById('contactQrcode');
+        img.src = d.wechat_qrcode;
+        img.style.display = 'inline-block';
+        area.style.display = 'block';
+    }
+    // 定价方案
+    if (d.pricing && d.pricing.length > 0) {
+        var html = '';
+        d.pricing.forEach(function(p) {
+            html += '<div class="price-card' + (p.popular ? ' popular' : '') + '">' +
+                '<div class="duration">' + p.name + '</div>' +
+                '<div class="price">' + p.price + '<span>' + (p.unit || '元') + '</span></div>' +
+                '<div class="unit">' + p.duration + '</div></div>';
+        });
+        document.getElementById('pricingCards').innerHTML = html;
+
+        // 添加卡片点击事件
+        document.querySelectorAll('.price-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                var wechatId = document.getElementById('contactWechatId').textContent;
+                if (wechatId) {
+                    // 复制微信号到剪贴板
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(wechatId).then(function() {
+                            showToast('微信号已复制: ' + wechatId);
+                        }).catch(function() {
+                            showToast('微信号: ' + wechatId);
+                        });
+                    } else {
+                        showToast('微信号: ' + wechatId);
+                    }
+                    // 滚动到联系方式区域
+                    document.getElementById('contactArea').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    showToast('请联系客服获取卡密');
+                }
+            });
+        });
+    }
+}).catch(function() {
+    document.getElementById('pricingCards').innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:20px 0">请联系客服获取价格</div>';
+});
 </script>
 </body>
 </html>

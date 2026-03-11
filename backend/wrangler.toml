@@ -4,6 +4,12 @@
 name = "boss-auto-apply-api"
 main = "_worker.js"
 compatibility_date = "2025-01-01"
+workers_dev = true
+
+# 自定义域名（绕过国内 .workers.dev 被墙）
+[[routes]]
+pattern = "boss.smartice.ai"
+custom_domain = true
 
 [[d1_databases]]
 binding = "DB"

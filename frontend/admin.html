@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- admin.html - v4 - 添加投递追踪统计（每日汇总 + 详细日志） -->
-<!-- Boss自动投递助手 - 管理员后台（卡密管理 + 投递追踪，默认按天计费） -->
+<!-- admin.html - v5 - 新增联系方式管理（微信号 + 二维码上传） -->
+<!-- Boss自动投递助手 - 管理员后台（卡密管理 + 投递追踪 + 联系方式管理） -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台 - Boss自动投递</title>
@@ -377,11 +377,72 @@
   .log-item .log-job { color: #333; flex: 1; }
   .log-item .log-salary { color: #27ae60; font-weight: 600; white-space: nowrap; }
 
+  /* 联系方式管理 */
+  .contact-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .contact-section h2 {
+    font-size: 16px;
+    color: #1a1a2e;
+    margin-bottom: 14px;
+  }
+  .contact-form {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .contact-left { flex: 1; min-width: 240px; }
+  .contact-right { text-align: center; }
+  .contact-left .form-group { margin-bottom: 12px; }
+  .contact-left .form-group input { width: 220px; }
+  .qr-preview {
+    width: 140px; height: 140px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .qr-preview:hover { border-color: #1a1a2e; }
+  .qr-preview img { max-width: 100%; max-height: 100%; }
+  .qr-preview .placeholder { color: #ccc; font-size: 12px; text-align: center; line-height: 1.5; }
+  .contact-save {
+    padding: 8px 20px;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .contact-save:hover { background: #16213e; }
+  .pricing-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .pricing-row input { width: 90px; }
+  .pricing-row label { font-size: 12px; color: #666; }
+  .pricing-row .popular-check { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #666; }
+
   @media (max-width: 640px) {
     .container { padding: 16px 12px; }
     .generate-form { flex-direction: column; align-items: stretch; }
     .form-group input { width: 100%; }
     .keys-table { font-size: 12px; }
+    .contact-form { flex-direction: column; }
+    .contact-left .form-group input { width: 100%; }
   }
 </style>
 </head>
@@ -418,6 +479,36 @@
     <div class="stat-card"><div class="label">已禁用</div><div class="value disabled" id="statDisabled">-</div></div>
   </div>
 
+  <!-- 联系方式 + 定价管理 -->
+  <div class="contact-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h2 style="margin-bottom:0">联系方式 & 定价管理</h2>
+      <button class="contact-save" onclick="saveContact()">保存</button>
+    </div>
+    <div class="contact-form">
+      <div class="contact-left">
+        <div class="form-group">
+          <label>微信号</label>
+          <input type="text" id="contactWechatId" placeholder="输入微信号">
+        </div>
+      </div>
+      <div class="contact-right">
+        <div class="qr-preview" id="qrPreview" onclick="document.getElementById('qrFileInput').click()">
+          <div class="placeholder" id="qrPlaceholder">点击上传<br>微信二维码</div>
+          <img id="qrPreviewImg" style="display:none">
+        </div>
+        <input type="file" id="qrFileInput" accept="image/*" style="display:none" onchange="handleQrUpload(event)">
+        <button class="action-btn" onclick="document.getElementById('qrFileInput').click()" style="font-size:12px">更换二维码</button>
+        <button class="action-btn danger" onclick="removeQrcode()" style="font-size:12px;margin-left:4px">删除</button>
+      </div>
+    </div>
+    <!-- 定价方案 -->
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f0f0f0">
+      <div style="font-size:13px;color:#666;font-weight:500;margin-bottom:10px">定价方案</div>
+      <div id="pricingRows" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+
   <!-- 生成卡密 -->
   <div class="generate-section">
     <h2>生成卡密</h2>
@@ -433,6 +524,10 @@
       <div class="form-group">
         <label>生成数量</label>
         <input type="number" id="genCount" value="1" min="1" max="100">
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <input type="text" id="genNote" placeholder="如：张三/微信xxx" style="width:160px">
       </div>
       <button class="generate-btn" onclick="generateKeys()">生成</button>
     </div>
@@ -507,6 +602,7 @@ async function doLogin(e) {
         sessionStorage.setItem('admin_pw', pw);
         document.getElementById('loginOverlay').classList.add('hidden');
         loadData();
+        loadContact();
     } catch(err) {
         document.getElementById('loginError').textContent = '连接失败';
     }
@@ -595,7 +691,7 @@ function renderTable(keys) {
 
     var html = '<table class="keys-table">' +
         '<thead><tr>' +
-        '<th>卡密</th><th>状态</th><th>有效期</th><th>设备</th><th>激活时间</th><th>操作</th>' +
+        '<th>卡密</th><th>备注</th><th>状态</th><th>有效期</th><th>设备</th><th>激活时间</th><th>操作</th>' +
         '</tr></thead><tbody>';
 
     keys.forEach(function(k) {
@@ -629,6 +725,7 @@ function renderTable(keys) {
 
         html += '<tr>' +
             '<td><span class="key-code">' + k.code + '</span></td>' +
+            '<td><span class="note-text" onclick="editNote(\'' + k.code + '\', this)" title="点击编辑" style="cursor:pointer;color:' + (k.note ? '#333' : '#ccc') + ';font-size:12px;max-width:120px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (k.note || '点击添加') + '</span></td>' +
             '<td>' + badge + '</td>' +
             '<td>' + k.days + '天</td>' +
             '<td>' + k.devices.length + '/' + k.max_devices + ' ' + devicesHtml + '</td>' +
@@ -646,12 +743,13 @@ async function generateKeys() {
     var days = parseInt(document.getElementById('genDays').value) || 30;
     var maxDevices = parseInt(document.getElementById('genDevices').value) || 2;
     var count = parseInt(document.getElementById('genCount').value) || 1;
+    var note = document.getElementById('genNote').value.trim();
 
     try {
         var res = await adminFetch(API_BASE + '/api/admin/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ days: days, max_devices: maxDevices, count: count })
+            body: JSON.stringify({ days: days, max_devices: maxDevices, count: count, note: note })
         });
         var data = await res.json();
         if (!data.ok) { showToast('生成失败'); return; }
@@ -806,10 +904,130 @@ function closeStats() {
     document.getElementById('statsOverlay').classList.add('hidden');
 }
 
+// 编辑卡密备注（点击即编辑）
+function editNote(code, el) {
+    var old = el.textContent === '点击添加' ? '' : el.textContent;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = old;
+    input.placeholder = '输入备注';
+    input.style.cssText = 'width:120px;padding:2px 6px;border:1px solid #00bebd;border-radius:4px;font-size:12px;outline:none';
+    el.replaceWith(input);
+    input.focus();
+    function save() {
+        var val = input.value.trim();
+        adminFetch(API_BASE + '/api/admin/note', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: code, note: val })
+        }).then(function() { loadData(); });
+    }
+    input.onblur = save;
+    input.onkeydown = function(e) { if (e.key === 'Enter') { input.blur(); } };
+}
+
+// ---- 联系方式 + 定价管理 ----
+
+var pendingQrBase64 = ''; // 暂存上传的二维码 base64
+var defaultPricing = [
+    { name: '体验卡', price: 1, unit: '元', duration: '1天', popular: false },
+    { name: '周卡', price: 5, unit: '元', duration: '7天', popular: true },
+    { name: '月卡', price: 15, unit: '元', duration: '30天', popular: false }
+];
+
+function renderPricingRows(pricing) {
+    var container = document.getElementById('pricingRows');
+    var html = '';
+    pricing.forEach(function(p, i) {
+        html += '<div class="pricing-row">' +
+            '<div class="form-group"><label>方案名</label><input type="text" id="pName' + i + '" value="' + (p.name || '') + '" placeholder="如：周卡"></div>' +
+            '<div class="form-group"><label>价格</label><input type="number" id="pPrice' + i + '" value="' + (p.price || 0) + '" min="0" step="0.01"></div>' +
+            '<div class="form-group"><label>单位</label><input type="text" id="pUnit' + i + '" value="' + (p.unit || '元') + '" style="width:50px"></div>' +
+            '<div class="form-group"><label>时长</label><input type="text" id="pDuration' + i + '" value="' + (p.duration || '') + '" placeholder="如：7天"></div>' +
+            '<div class="popular-check"><input type="radio" name="popularPlan" id="pPopular' + i + '"' + (p.popular ? ' checked' : '') + '><label for="pPopular' + i + '">推荐</label></div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function collectPricing() {
+    var pricing = [];
+    for (var i = 0; i < 3; i++) {
+        var nameEl = document.getElementById('pName' + i);
+        if (!nameEl) break;
+        pricing.push({
+            name: nameEl.value.trim(),
+            price: parseFloat(document.getElementById('pPrice' + i).value) || 0,
+            unit: document.getElementById('pUnit' + i).value.trim() || '元',
+            duration: document.getElementById('pDuration' + i).value.trim(),
+            popular: document.getElementById('pPopular' + i).checked
+        });
+    }
+    return pricing;
+}
+
+async function loadContact() {
+    try {
+        var res = await adminFetch(API_BASE + '/api/admin/contact');
+        var data = await res.json();
+        if (!data.ok) return;
+        document.getElementById('contactWechatId').value = data.wechat_id || '';
+        if (data.wechat_qrcode) {
+            pendingQrBase64 = data.wechat_qrcode;
+            document.getElementById('qrPreviewImg').src = data.wechat_qrcode;
+            document.getElementById('qrPreviewImg').style.display = 'block';
+            document.getElementById('qrPlaceholder').style.display = 'none';
+        }
+        renderPricingRows(data.pricing || defaultPricing);
+    } catch(e) {
+        renderPricingRows(defaultPricing);
+    }
+}
+
+function handleQrUpload(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) { showToast('图片不能超过 500KB'); return; }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        pendingQrBase64 = ev.target.result;
+        document.getElementById('qrPreviewImg').src = pendingQrBase64;
+        document.getElementById('qrPreviewImg').style.display = 'block';
+        document.getElementById('qrPlaceholder').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeQrcode() {
+    pendingQrBase64 = '';
+    document.getElementById('qrPreviewImg').style.display = 'none';
+    document.getElementById('qrPreviewImg').src = '';
+    document.getElementById('qrPlaceholder').style.display = 'block';
+    document.getElementById('qrFileInput').value = '';
+}
+
+async function saveContact() {
+    var wechatId = document.getElementById('contactWechatId').value.trim();
+    var pricing = collectPricing();
+    try {
+        var res = await adminFetch(API_BASE + '/api/admin/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wechat_id: wechatId, wechat_qrcode: pendingQrBase64, pricing: pricing })
+        });
+        var data = await res.json();
+        if (data.ok) showToast('已保存');
+        else showToast('保存失败');
+    } catch(e) {
+        showToast('请求失败: ' + e.message);
+    }
+}
+
 // 初始加载：已登录则加载数据，否则显示登录
 if (getAdminPw()) {
     document.getElementById('loginOverlay').classList.add('hidden');
     loadData();
+    loadContact();
 }
 </script>
 </body>
