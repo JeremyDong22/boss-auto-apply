@@ -1,4 +1,5 @@
-// v13.1 - Boss 直聘自动投递 Bookmarklet
+// v13.2 - Boss 直聘自动投递 Bookmarklet
+// v13.2 修复：礼花只在限流弹窗时触发，改为面板内持续喷射（不全屏），黄色暂停不再喷礼花
 // v13.1 修复：暂停后继续会重复处理同一张卡片的 bug（idx 提前自增）
 // v13 改进：停下后显示"继续"（接着投）和"重开"（清零重来），投递逻辑更完整
 // v12 改进：面板添加 ClawBoss 吉祥物头像，版本号移至面板右下角极弱化显示
@@ -10,12 +11,16 @@
 
 (function () {
     'use strict';
+    console.log('[ClawBoss] bookmarklet 开始执行');
+    try {
 
     // 计数器：无固定上限，持续投递直到用户停止、到底、或触发限流
     var count = 0;    // 成功投递数
     var skipped = 0;  // 跳过数（已沟通/无按钮）
     var idx = 0;      // 当前遍历索引
     var running = false;
+    var rateLimited = false;  // 是否因限流停止（区分正常暂停）
+    var confettiTimer = null; // 持续礼花的定时器
 
     // 读取 loader 设置的卡密信息（由 loader bookmarklet 注入）
     var currentKey = window.__BOSS_KEY || '';
@@ -76,7 +81,7 @@
             <a href="https://boss-frontend.preview.aliyun-zeabur.cn" target="_blank"
                 style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">买卡密 / 找客服</a>
-            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13</div>
+            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.2</div>
         </div>`;
     document.body.appendChild(panel);
 
@@ -132,16 +137,36 @@
         }
     }
 
-    // 礼花特效（canvas-confetti，按需加载）
-    function fireConfetti() {
+    // 礼花特效：面板内持续喷射（canvas-confetti 自定义 canvas）
+    // 只在限流弹窗触发时调用，一直喷到用户重开或换卡密
+    function startPanelConfetti() {
+        stopPanelConfetti(); // 先清理旧的
+
+        var inner = document.getElementById('aa-inner');
+        if (!inner) return;
+
+        // 在面板内创建 canvas 覆盖层
+        var canvas = document.createElement('canvas');
+        canvas.id = 'aa-confetti-canvas';
+        canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100001;border-radius:12px';
+        inner.style.position = 'relative';
+        inner.appendChild(canvas);
+
         function launch() {
-            var end = Date.now() + 3000;
-            (function frame() {
-                confetti({ particleCount: 7, angle: 60, spread: 55, origin: { x: 0 } });
-                confetti({ particleCount: 7, angle: 120, spread: 55, origin: { x: 1 } });
-                if (Date.now() < end) requestAnimationFrame(frame);
-            }());
+            // 用面板内的 canvas 创建 confetti 实例
+            var panelConfetti = confetti.create(canvas, { resize: true });
+
+            // 每隔 600ms 喷一波，一直喷
+            confettiTimer = setInterval(function () {
+                if (!document.getElementById('aa-confetti-canvas')) {
+                    stopPanelConfetti();
+                    return;
+                }
+                panelConfetti({ particleCount: 5, angle: 60, spread: 50, origin: { x: 0, y: 0.5 }, colors: ['#ff0', '#f0f', '#0ff', '#ff6600', '#00ff00'] });
+                panelConfetti({ particleCount: 5, angle: 120, spread: 50, origin: { x: 1, y: 0.5 }, colors: ['#ff0', '#f0f', '#0ff', '#ff6600', '#00ff00'] });
+            }, 600);
         }
+
         if (typeof confetti === 'function') {
             launch();
         } else {
@@ -150,6 +175,16 @@
             s.onload = launch;
             document.head.appendChild(s);
         }
+    }
+
+    // 停止面板礼花
+    function stopPanelConfetti() {
+        if (confettiTimer) {
+            clearInterval(confettiTimer);
+            confettiTimer = null;
+        }
+        var canvas = document.getElementById('aa-confetti-canvas');
+        if (canvas) canvas.remove();
     }
 
     // 关闭面板
@@ -280,10 +315,11 @@
 
         // 停止运行
         running = false; setMascotShake(false);
+        rateLimited = true;
         setBtnState('initial');
 
-        // 面板不变色，放礼花庆祝投完了
-        fireConfetti();
+        // 面板内持续喷礼花庆祝投完了
+        startPanelConfetti();
 
         status('🎉 今日已达150人上限！已投递' + count + '个，跳过' + skipped + '个');
 
@@ -396,7 +432,9 @@
     async function run(resetCounters) {
         if (running) return;
         running = true;
+        rateLimited = false;
         setMascotShake(true);
+        stopPanelConfetti(); // 重新开始时停止礼花
 
         if (resetCounters !== false) {
             count = 0;
@@ -530,7 +568,8 @@
 
         running = false; setMascotShake(false);
         // 正常结束（非限流）→ 面板变黄，显示暂停态按钮（可继续或重开）
-        if (!document.querySelector('.chat-block-dialog')) {
+        // 限流结束时不覆盖（面板保持默认色 + 持续礼花）
+        if (!rateLimited) {
             setPanelColor('yellow');
             setBtnState('paused');
             status('完成！投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
@@ -555,4 +594,6 @@
             status('已停止，投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
         }
     };
+    console.log('[ClawBoss] bookmarklet 面板已创建');
+    } catch(e) { console.error('[ClawBoss] bookmarklet 执行出错:', e); alert('ClawBoss 出错: ' + e.message); }
 })();
