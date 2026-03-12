@@ -80,6 +80,26 @@
         </div>`;
     document.body.appendChild(panel);
 
+    // 检测是否在 Boss 直聘页面，不在则显示毛玻璃遮罩
+    if (location.hostname.indexOf('zhipin.com') === -1) {
+        var overlay = document.createElement('div');
+        overlay.id = 'aa-not-boss';
+        overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;' +
+            'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
+            'background:rgba(255,255,255,0.25);border-radius:12px;z-index:100000;' +
+            'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px">' +
+            '<div style="font-size:14px;font-weight:600;color:#333;text-align:center;text-shadow:0 1px 2px rgba(255,255,255,0.6)">当前不在 Boss 直聘页面</div>' +
+            '<a href="https://www.zhipin.com/web/geek/jobs?ka=header-jobs" style="' +
+            'padding:8px 20px;background:linear-gradient(135deg,#00bebd,#00a8a7);color:#fff;' +
+            'border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;' +
+            'box-shadow:0 2px 8px rgba(0,190,189,0.4);transition:opacity 0.2s" ' +
+            'onmouseover="this.style.opacity=\'0.85\'" onmouseout="this.style.opacity=\'1\'">前往 Boss 直聘</a>' +
+            '</div>';
+        var inner = document.getElementById('aa-inner');
+        inner.style.position = 'relative';
+        inner.appendChild(overlay);
+    }
+
     // mascot 抖动控制：投递中抖，停下不抖
     function setMascotShake(on) {
         var m = document.getElementById('aa-mascot');
