@@ -179,7 +179,9 @@
     font-weight: 600;
     font-size: 13px;
     letter-spacing: 0.5px;
+    cursor: pointer;
   }
+  .key-code:active { opacity: 0.6; }
 
   /* 状态标签 */
   .badge {
@@ -765,7 +767,7 @@ function renderTable(keys) {
         actionHtml += '<button class="action-btn danger" onclick="deleteKey(\'' + k.code + '\')" style="margin-left:4px">删除</button>';
 
         html += '<tr>' +
-            '<td><span class="key-code">' + k.code + '</span></td>' +
+            '<td><span class="key-code" onclick="copyCode(this)">' + k.code + '</span></td>' +
             '<td><span class="note-text" onclick="editNote(\'' + k.code + '\', this)" title="点击编辑" style="cursor:pointer;color:' + (k.note ? '#333' : '#ccc') + ';font-size:12px;max-width:120px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (k.note || '点击添加') + '</span></td>' +
             '<td><span style="color:#27ae60;font-weight:600;font-size:13px">¥' + (k.amount ? k.amount.toFixed(2) : '0.00') + '</span></td>' +
             '<td>' + badge + '</td>' +
@@ -816,6 +818,16 @@ function copyKeys() {
     var text = document.getElementById('genResult').dataset.keys;
     navigator.clipboard.writeText(text).then(function() {
         showToast('已复制到剪贴板');
+    });
+}
+
+// 点击复制卡密
+function copyCode(el) {
+    navigator.clipboard.writeText(el.textContent).then(function() {
+        var orig = el.textContent;
+        el.textContent = '已复制';
+        el.style.color = '#27ae60';
+        setTimeout(function() { el.textContent = orig; el.style.color = ''; }, 800);
     });
 }
 
