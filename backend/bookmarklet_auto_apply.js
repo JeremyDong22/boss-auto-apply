@@ -101,7 +101,6 @@
             'onmouseover="this.style.opacity=\'0.85\'" onmouseout="this.style.opacity=\'1\'">前往 Boss 直聘</a>' +
             '</div>';
         var inner = document.getElementById('aa-inner');
-        inner.style.position = 'relative';
         inner.appendChild(overlay);
     }
 
@@ -149,7 +148,6 @@
         var canvas = document.createElement('canvas');
         canvas.id = 'aa-confetti-canvas';
         canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100001;border-radius:12px';
-        inner.style.position = 'relative';
         inner.appendChild(canvas);
 
         function launch() {
