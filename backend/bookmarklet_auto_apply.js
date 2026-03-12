@@ -1,4 +1,5 @@
-// v13.2 - Boss 直聘自动投递 Bookmarklet
+// v13.3 - Boss 直聘自动投递 Bookmarklet
+// v13.3 修复：简化滚动逻辑，直接滚到底部，间隔 0.5 秒，4 次尝试，解决投 15 个就停的问题
 // v13.2 修复：礼花只在限流弹窗时触发，改为面板内持续喷射（不全屏），黄色暂停不再喷礼花
 // v13.1 修复：暂停后继续会重复处理同一张卡片的 bug（idx 提前自增）
 // v13 改进：停下后显示"继续"（接着投）和"重开"（清零重来），投递逻辑更完整
@@ -80,7 +81,7 @@
             <a href="https://boss-frontend.preview.aliyun-zeabur.cn" target="_blank"
                 style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">买卡密 / 找客服</a>
-            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.2</div>
+            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.3</div>
         </div>`;
     document.body.appendChild(panel);
 
@@ -431,13 +432,9 @@
         while (attempts < 4 && running) {
             if (checkChatBlock()) return false;
 
-            // 三步滚动：先到中间 → 再到接近底部 → 最后到底，确保触发懒加载
-            window.scrollTo(0, Math.max(0, document.body.scrollHeight - 3000));
-            await wait(300);
-            window.scrollTo(0, Math.max(0, document.body.scrollHeight - 1000));
-            await wait(300);
+            // 直接滚到最底部，确保触发懒加载
             window.scrollTo(0, document.body.scrollHeight);
-            await wait(2000);
+            await wait(500);
             if (!running) return false;
             if (checkChatBlock()) return false;
 
