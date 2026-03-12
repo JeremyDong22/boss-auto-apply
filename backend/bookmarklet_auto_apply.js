@@ -151,16 +151,40 @@
         function launch() {
             // 用面板内的 canvas 创建 confetti 实例
             var panelConfetti = confetti.create(canvas, { resize: true });
+            var panelColors = ['#ff0', '#f0f', '#0ff', '#ff6600', '#00ff00', '#ff3366', '#6633ff'];
 
-            // 每隔 600ms 喷一波，一直喷
+            // 适配小面板（~240x350px）的参数：粒子小、速度慢、生命短
+            // 每隔 800ms 从左右两侧轻柔喷出
             confettiTimer = setInterval(function () {
                 if (!document.getElementById('aa-confetti-canvas')) {
                     stopPanelConfetti();
                     return;
                 }
-                panelConfetti({ particleCount: 5, angle: 60, spread: 50, origin: { x: 0, y: 0.5 }, colors: ['#ff0', '#f0f', '#0ff', '#ff6600', '#00ff00'] });
-                panelConfetti({ particleCount: 5, angle: 120, spread: 50, origin: { x: 1, y: 0.5 }, colors: ['#ff0', '#f0f', '#0ff', '#ff6600', '#00ff00'] });
-            }, 600);
+                panelConfetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 40,
+                    origin: { x: 0, y: 0.3 },
+                    startVelocity: 12,
+                    scalar: 0.5,
+                    gravity: 0.6,
+                    ticks: 120,
+                    decay: 0.92,
+                    colors: panelColors
+                });
+                panelConfetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 40,
+                    origin: { x: 1, y: 0.3 },
+                    startVelocity: 12,
+                    scalar: 0.5,
+                    gravity: 0.6,
+                    ticks: 120,
+                    decay: 0.92,
+                    colors: panelColors
+                });
+            }, 800);
         }
 
         if (typeof confetti === 'function') {
