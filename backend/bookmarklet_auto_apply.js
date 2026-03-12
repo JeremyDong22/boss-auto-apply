@@ -36,7 +36,7 @@
         <div id="aa-inner" style="position:fixed;top:80px;right:20px;z-index:99999;
             background:linear-gradient(135deg,#00bebd,#00a8a7);color:white;
             padding:16px 20px;border-radius:12px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;width:240px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;min-width:220px;max-width:300px;
             transition:background 0.4s ease">
             <div id="aa-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:24px;opacity:0.7;line-height:1">\u00d7</div>
             <style>
@@ -60,7 +60,7 @@
             <div style="font-size:13px;margin-bottom:6px">帮你约了: <b id="aa-count">0</b> 个</div>
             <div style="font-size:13px;margin-bottom:6px">跳过了: <b id="aa-skipped">0</b> 个</div>
             <div style="font-size:13px;margin-bottom:12px">看过了: <b id="aa-total">0</b> 个</div>
-            <div id="aa-status" style="font-size:12px;margin-bottom:12px;opacity:0.9">点下面按钮让我开始</div>
+            <div id="aa-status" style="font-size:12px;margin-bottom:12px;opacity:0.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="">点下面按钮让我开始</div>
             <div style="display:flex;gap:8px;margin-bottom:10px">
                 <button id="aa-start" style="flex:1;padding:8px;border:none;border-radius:6px;
                     background:white;color:#00bebd;font-weight:bold;cursor:pointer;font-size:14px">开投！</button>
@@ -295,7 +295,7 @@
 
     function status(t) {
         var e = document.getElementById('aa-status');
-        if (e) e.textContent = t;
+        if (e) { e.textContent = t; e.title = t; }
         console.log('[自动投递] ' + t);
     }
 
