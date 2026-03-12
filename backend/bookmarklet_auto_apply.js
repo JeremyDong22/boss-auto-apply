@@ -35,7 +35,7 @@
         <div id="aa-inner" style="position:fixed;top:80px;right:20px;z-index:99999;
             background:linear-gradient(135deg,#00bebd,#00a8a7);color:white;
             padding:16px 20px;border-radius:12px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;min-width:240px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;width:240px;
             transition:background 0.4s ease">
             <div id="aa-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:24px;opacity:0.7;line-height:1">\u00d7</div>
             <style>
@@ -341,7 +341,7 @@
         // 面板内持续喷礼花庆祝投完了
         startPanelConfetti();
 
-        status('🎉 今日已达150人上限！已投递' + count + '个，跳过' + skipped + '个');
+        status('🎉 今日已达上限！');
 
         // 上报限流事件到后台
         var reportApi = window.__BOSS_API || 'https://boss.smartice.ai';
@@ -592,7 +592,7 @@
         if (!rateLimited) {
             setPanelColor('yellow');
             setBtnState('paused');
-            status('完成！投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
+            status('当前页投完了');
         }
     }
 
@@ -611,7 +611,7 @@
             running = false; setMascotShake(false);
             setPanelColor('yellow');
             setBtnState('paused');
-            status('已停止，投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
+            status('已停止');
         }
     };
 })();
