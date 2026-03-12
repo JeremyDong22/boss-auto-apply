@@ -190,10 +190,8 @@ async function validateKey(keyCode, fingerprint) {
 // ---- 超薄 loader：返回完整的登录面板 + 验证逻辑 JS ----
 function buildLoaderJS(apiBase) {
     return `(function() {
-    console.log('[ClawBoss] loader 已加载, 页面:', location.href);
     var k = localStorage.getItem('boss_auto_key');
     var api = '${apiBase}';
-    console.log('[ClawBoss] API:', api, '缓存卡密:', k ? '有' : '无');
 
     function showPanel(errMsg) {
         var old = document.getElementById('aa-login'); if (old) old.remove();
@@ -242,11 +240,9 @@ function buildLoaderJS(apiBase) {
         window.__BOSS_API = api;
         var btn = document.getElementById('aa-login-btn');
         if (btn) { btn.textContent = '验证中...'; btn.disabled = true; }
-        console.log('[ClawBoss] 开始验证, key:', key);
         fetch(api + '/api/verify?key=' + key + '&fp=' + encodeURIComponent(fp))
-            .then(function(r) { console.log('[ClawBoss] verify 响应状态:', r.status); return r.json(); })
+            .then(function(r) { return r.json(); })
             .then(function(d) {
-                console.log('[ClawBoss] verify 结果:', JSON.stringify(d).slice(0, 200));
                 if (!d.ok) {
                     localStorage.removeItem('boss_auto_key');
                     var ee = document.getElementById('aa-login-err');
@@ -260,22 +256,17 @@ function buildLoaderJS(apiBase) {
                 }
                 window.__BOSS_INFO = d.info;
                 var el = document.getElementById('aa-login'); if (el) el.remove();
-                var codeUrl = api + '/api/code?key=' + encodeURIComponent(key);
-                console.log('[ClawBoss] 验证通过, 加载脚本:', codeUrl);
                 var s = document.createElement('script');
-                s.src = codeUrl;
-                s.onload = function() { console.log('[ClawBoss] 脚本加载成功'); };
-                s.onerror = function(e) { console.error('[ClawBoss] 脚本加载失败!', e); alert('ClawBoss 脚本加载失败，请检查控制台'); };
+                s.src = api + '/api/code?key=' + encodeURIComponent(key);
                 document.head.appendChild(s);
             })
             .catch(function(e) {
-                console.error('[ClawBoss] fetch 失败:', e);
                 var ee = document.getElementById('aa-login-err');
                 if (ee) {
-                    ee.textContent = '连接服务器失败: ' + e.message; ee.style.display = 'block';
+                    ee.textContent = '连接服务器失败'; ee.style.display = 'block';
                     if (btn) { btn.textContent = '激活'; btn.disabled = false; }
                 } else {
-                    showPanel('连接服务器失败: ' + e.message);
+                    showPanel('连接服务器失败');
                 }
             });
     }
@@ -308,9 +299,6 @@ app.get('/health', async (req, res) => {
 
 // 超薄 loader 端点
 app.get('/api/loader', (req, res) => {
-    const ip = getClientIP(req);
-    const referer = req.get('referer') || 'no-referer';
-    console.log(`[loader] ip=${ip} referer=${referer} ua=${(req.get('user-agent') || '').slice(0, 80)}`);
     // Use x-forwarded-proto from reverse proxy (Zeabur), fallback to req.protocol
     const proto = req.get('x-forwarded-proto') || req.protocol;
     const apiBase = `${proto}://${req.get('host')}`;
@@ -321,19 +309,15 @@ app.get('/api/loader', (req, res) => {
 app.get('/api/code', async (req, res) => {
     try {
         const keyCode = req.query.key;
-        const ip = getClientIP(req);
-        console.log(`[code] ip=${ip} key=${keyCode || 'none'}`);
-        if (!keyCode) return res.status(400).type('text/javascript').send('console.error("[ClawBoss] /api/code 缺少卡密")');
+        if (!keyCode) return res.status(400).type('text/javascript').send('');
         const [rows] = await pool.execute('SELECT code, disabled FROM licenses WHERE code = ?', [keyCode]);
         if (rows.length === 0 || rows[0].disabled) {
-            console.log(`[code] key=${keyCode} 无效或已禁用`);
-            return res.status(403).type('text/javascript').send('console.error("[ClawBoss] /api/code 卡密无效")');
+            return res.status(403).type('text/javascript').send('');
         }
-        console.log(`[code] key=${keyCode} 代码已下发，长度=${SCRIPT_CODE.length}`);
         res.type('text/javascript').send(SCRIPT_CODE);
     } catch (err) {
-        console.error('[code] 错误:', err);
-        res.status(500).type('text/javascript').send('console.error("[ClawBoss] /api/code 服务器错误")');
+        console.error('代码端点错误:', err);
+        res.status(500).type('text/javascript').send('');
     }
 });
 
@@ -344,15 +328,12 @@ app.get('/api/verify', async (req, res) => {
         const fp = req.query.fp;
         const ip = getClientIP(req);
 
-        console.log(`[verify] ip=${ip} key=${keyCode || 'none'}`);
-
         const rateCheck = await checkRateLimit(ip);
-        if (rateCheck.blocked) { console.log(`[verify] ip=${ip} 被限流`); return res.status(429).json({ ok: false, msg: rateCheck.msg, blocked: true }); }
+        if (rateCheck.blocked) return res.status(429).json({ ok: false, msg: rateCheck.msg, blocked: true });
         if (!keyCode) return res.status(400).json({ ok: false, msg: '缺少卡密' });
 
         const result = await validateKey(keyCode, fp);
         if (!result.valid) {
-            console.log(`[verify] key=${keyCode} 验证失败: ${result.msg}`);
             if (result.reason === 'disabled' || result.reason === 'expired') {
                 return res.status(403).json({ ok: false, msg: result.msg });
             }
@@ -363,7 +344,6 @@ app.get('/api/verify', async (req, res) => {
             return res.status(403).json({ ok: false, msg, remain_attempts: failure.remain_attempts, blocked: failure.locked });
         }
 
-        console.log(`[verify] key=${keyCode} 验证通过`);
         await clearFailures(ip);
         res.json({ ok: true, info: result.info });
     } catch (err) {

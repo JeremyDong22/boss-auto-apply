@@ -11,8 +11,6 @@
 
 (function () {
     'use strict';
-    console.log('[ClawBoss] bookmarklet 开始执行');
-    try {
 
     // 计数器：无固定上限，持续投递直到用户停止、到底、或触发限流
     var count = 0;    // 成功投递数
@@ -52,7 +50,7 @@
                 }
             </style>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                <img id="aa-mascot" src="https://boss-frontend.preview.aliyun-zeabur.cn/images/mascot-typing.png" style="width:42px;height:auto;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))" alt="">
+                <img id="aa-mascot" src="https://boss-frontend.preview.aliyun-zeabur.cn/images/mascot-typing.png" style="width:42px;height:42px;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));object-fit:contain" alt="">
                 <div style="font-size:16px;font-weight:bold;line-height:1.2">ClawBoss</div>
             </div>
             <div id="aa-key-line" style="font-size:11px;margin-bottom:10px;opacity:0.85">
@@ -592,6 +590,4 @@
             status('已停止，投递' + count + '个，跳过' + skipped + '个，共遍历' + idx + '个');
         }
     };
-    console.log('[ClawBoss] bookmarklet 面板已创建');
-    } catch(e) { console.error('[ClawBoss] bookmarklet 执行出错:', e); alert('ClawBoss 出错: ' + e.message); }
 })();
