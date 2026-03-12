@@ -256,7 +256,7 @@ function buildLoaderJS(apiBase) {
                 }
                 window.__BOSS_INFO = d.info;
                 var el = document.getElementById('aa-login'); if (el) el.remove();
-                var s = document.createElement('script'); s.textContent = d.code; document.head.appendChild(s);
+                var s = document.createElement('script'); s.src = api + '/api/code?key=' + encodeURIComponent(key); document.head.appendChild(s);
             })
             .catch(function(e) {
                 var ee = document.getElementById('aa-login-err');
@@ -303,6 +303,22 @@ app.get('/api/loader', (req, res) => {
     res.type('text/javascript').send(buildLoaderJS(apiBase));
 });
 
+// 投递脚本代码端点（验证通过后以外部脚本方式加载，避免 CSP 拦截内联脚本）
+app.get('/api/code', async (req, res) => {
+    try {
+        const keyCode = req.query.key;
+        if (!keyCode) return res.status(400).type('text/javascript').send('console.error("缺少卡密")');
+        const [rows] = await pool.execute('SELECT code, disabled FROM licenses WHERE code = ?', [keyCode]);
+        if (rows.length === 0 || rows[0].disabled) {
+            return res.status(403).type('text/javascript').send('console.error("卡密无效")');
+        }
+        res.type('text/javascript').send(SCRIPT_CODE);
+    } catch (err) {
+        console.error('代码端点错误:', err);
+        res.status(500).type('text/javascript').send('console.error("服务器错误")');
+    }
+});
+
 // 卡密验证端点
 app.get('/api/verify', async (req, res) => {
     try {
@@ -327,7 +343,7 @@ app.get('/api/verify', async (req, res) => {
         }
 
         await clearFailures(ip);
-        res.json({ ok: true, code: SCRIPT_CODE, info: result.info });
+        res.json({ ok: true, info: result.info });
     } catch (err) {
         console.error('验证错误:', err);
         res.status(500).json({ ok: false, msg: '服务器错误' });
