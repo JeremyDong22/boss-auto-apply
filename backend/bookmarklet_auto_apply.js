@@ -37,7 +37,7 @@
             background:linear-gradient(135deg,#00bebd,#00a8a7);color:white;
             padding:16px 20px;border-radius:12px;
             box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:system-ui;min-width:220px;max-width:300px;
-            transition:background 0.4s ease">
+            transition:background 0.4s ease;user-select:none">
             <div id="aa-close" style="position:absolute;top:10px;right:14px;cursor:pointer;font-size:24px;opacity:0.7;line-height:1">\u00d7</div>
             <style>
                 @keyframes aa-shake {
@@ -50,8 +50,8 @@
                     90%{transform:translate(2px,1px) rotate(0.5deg)}
                 }
             </style>
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                <img id="aa-mascot" src="https://boss-frontend.preview.aliyun-zeabur.cn/images/mascot-typing.png" style="width:42px;height:42px;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));object-fit:contain" alt="">
+            <div id="aa-drag-handle" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:grab">
+                <img id="aa-mascot" src="https://boss-frontend.preview.aliyun-zeabur.cn/images/mascot-typing.png" style="width:42px;height:42px;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));object-fit:contain;pointer-events:none" alt="">
                 <div style="font-size:16px;font-weight:bold;line-height:1.2">ClawBoss</div>
             </div>
             <div id="aa-key-line" style="font-size:11px;margin-bottom:10px;opacity:0.85">
@@ -214,6 +214,38 @@
         var p = document.getElementById('aa-panel');
         if (p) p.remove();
     };
+
+    // 拖拽面板：按住头部区域（mascot+标题）可任意拖动
+    (function () {
+        var handle = document.getElementById('aa-drag-handle');
+        var inner = document.getElementById('aa-inner');
+        if (!handle || !inner) return;
+        var dragging = false, startX, startY, startLeft, startTop;
+        handle.addEventListener('mousedown', function (e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+            dragging = true;
+            handle.style.cursor = 'grabbing';
+            // 首次拖拽时把 right 定位转为 left 定位
+            if (inner.style.right) {
+                var rect = inner.getBoundingClientRect();
+                inner.style.left = rect.left + 'px';
+                inner.style.right = 'auto';
+            }
+            var rect = inner.getBoundingClientRect();
+            startX = e.clientX; startY = e.clientY;
+            startLeft = rect.left; startTop = rect.top;
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', function (e) {
+            if (!dragging) return;
+            var dx = e.clientX - startX, dy = e.clientY - startY;
+            inner.style.left = Math.max(0, Math.min(window.innerWidth - inner.offsetWidth, startLeft + dx)) + 'px';
+            inner.style.top = Math.max(0, Math.min(window.innerHeight - inner.offsetHeight, startTop + dy)) + 'px';
+        });
+        document.addEventListener('mouseup', function () {
+            if (dragging) { dragging = false; handle.style.cursor = 'grab'; }
+        });
+    })();
 
     // 换卡密：在面板内输入新 key → 验证 → 成功则保存到 localStorage 并更新显示
     document.getElementById('aa-change-key').onclick = async function () {
