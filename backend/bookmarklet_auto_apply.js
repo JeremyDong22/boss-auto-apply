@@ -18,7 +18,6 @@
     var idx = 0;      // 当前遍历索引
     var running = false;
     var rateLimited = false;  // 是否因限流停止（区分正常暂停）
-    var reachedBottom = false; // 是否刷到底了（无更多卡片）
     var confettiTimer = null; // 持续礼花的定时器
 
     // 读取 loader 设置的卡密信息（由 loader bookmarklet 注入）
@@ -440,14 +439,6 @@
             startBtn.disabled = false;
             stopBtn.textContent = '继续';
             stopBtn.style.background = 'rgba(255,255,255,0.3)';
-        } else if (state === 'bottom') {
-            // 到底了：左边变"刷新页面"，右边隐藏继续（没意义了）
-            startBtn.textContent = '刷新页面';
-            startBtn.style.opacity = '1';
-            startBtn.style.cursor = 'pointer';
-            startBtn.disabled = false;
-            stopBtn.textContent = '重开';
-            stopBtn.style.background = 'rgba(255,255,255,0.3)';
         } else {
             // 初始状态
             startBtn.textContent = '开投！';
@@ -465,7 +456,6 @@
         if (running) return;
         running = true;
         rateLimited = false;
-        reachedBottom = false;
         setMascotShake(true);
         stopPanelConfetti(); // 重新开始时停止礼花
 
@@ -603,37 +593,26 @@
         // 限流结束时不覆盖（面板保持默认色 + 持续礼花）
         if (!rateLimited) {
             setPanelColor('yellow');
+            setBtnState('paused');
             // 判断是到底了还是用户手动暂停
-            // 到底了：idx >= cards.length 且 tryScrollForMore 返回 false
             var cards = getCards();
             if (idx >= (cards ? cards.length : 0)) {
-                reachedBottom = true;
-                setBtnState('bottom');
                 status('到底了');
             } else {
-                setBtnState('paused');
                 status('已停止');
             }
         }
     }
 
-    // "开投！" / "重开" / "刷新页面" 按钮
+    // "开投！" / "重开" 按钮：始终清零重来
     document.getElementById('aa-start').onclick = function () {
-        var startBtn = document.getElementById('aa-start');
-        if (startBtn && startBtn.textContent === '刷新页面') {
-            location.reload();
-            return;
-        }
         run(true);
     };
-    // "停下" / "继续" / "重开" 按钮：根据当前文本切换行为
+    // "停下" / "继续" 按钮：根据当前文本切换行为
     document.getElementById('aa-stop').onclick = function () {
         var stopBtn = document.getElementById('aa-stop');
         if (stopBtn && stopBtn.textContent === '继续') {
             // 继续：从当前位置接着投，不清零
-            run(false);
-        } else if (stopBtn && stopBtn.textContent === '重开') {
-            // 到底了状态下的重开：清零重来
             run(true);
         } else {
             // 停下
