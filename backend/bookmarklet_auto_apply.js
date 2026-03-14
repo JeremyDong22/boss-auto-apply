@@ -1,4 +1,5 @@
-// v13.3 - Boss 直聘自动投递 Bookmarklet
+// v13.4 - Boss 直聘自动投递 Bookmarklet
+// v13.4 改进：达到150人上限时保留限流弹窗不关闭，让用户看到成果
 // v13.3 修复：简化滚动逻辑，直接滚到底部，间隔 0.5 秒，4 次尝试，解决投 15 个就停的问题
 // v13.2 修复：礼花只在限流弹窗时触发，改为面板内持续喷射（不全屏），黄色暂停不再喷礼花
 // v13.1 修复：暂停后继续会重复处理同一张卡片的 bug（idx 提前自增）
@@ -81,7 +82,7 @@
             <a href="https://boss-frontend.preview.aliyun-zeabur.cn" target="_blank"
                 style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">买卡密 / 找客服</a>
-            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.3</div>
+            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.4</div>
         </div>`;
     document.body.appendChild(panel);
 
@@ -358,16 +359,12 @@
         return null;
     }
 
-    // 检测"无法进行沟通"限流弹窗 → 点确定、停止运行、放礼花
+    // 检测"无法进行沟通"限流弹窗 → 停止运行、放礼花（弹窗保留不关，让用户看到今日已达上限）
     function checkChatBlock() {
         var dialog = document.querySelector('.chat-block-dialog');
         if (!dialog) return false;
 
-        // 点击"确定"关闭弹窗
-        var btn = dialog.querySelector('.sure-btn');
-        if (btn) realClick(btn);
-
-        // 停止运行
+        // 停止运行（弹窗保留不关，让用户看到今日已达上限）
         running = false; setMascotShake(false);
         rateLimited = true;
         setBtnState('initial');
