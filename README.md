@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="frontend/images/clawboss-mascot.png" alt="ClawBoss Logo" width="180"/>
-
 # ClawBoss
 
 ### 约面交给我，你赶紧去学习
