@@ -1,4 +1,5 @@
-// v13.5 - Boss 直聘自动投递 Bookmarklet
+// v13.6 - Boss 直聘自动投递 Bookmarklet
+// v13.6 改进：用 Web Worker 计时器替代 setTimeout，解决后台标签页被 Chrome 节流导致投递变慢的问题
 // v13.5 改进：区分"还剩X次"温馨提示和"已达上限"限流弹窗，提醒自动点掉继续投，上限才停
 // v13.4 改进：达到150人上限时保留限流弹窗不关闭，让用户看到成果
 // v13.3 修复：简化滚动逻辑，直接滚到底部，间隔 0.5 秒，4 次尝试，解决投 15 个就停的问题
@@ -83,7 +84,7 @@
             <a href="https://boss-frontend.preview.aliyun-zeabur.cn" target="_blank"
                 style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">买卡密 / 找客服</a>
-            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.4</div>
+            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.6</div>
         </div>`;
     document.body.appendChild(panel);
 
@@ -211,9 +212,10 @@
         if (canvas) canvas.remove();
     }
 
-    // 关闭面板
+    // 关闭面板（同时清理 Web Worker 避免内存泄漏）
     document.getElementById('aa-close').onclick = function () {
         running = false; setMascotShake(false);
+        if (_workerTimer) { try { _workerTimer.terminate(); } catch(e){} _workerTimer = null; }
         var p = document.getElementById('aa-panel');
         if (p) p.remove();
     };
@@ -317,7 +319,36 @@
         }
     }
 
+    // Web Worker 计时器：后台标签页不被 Chrome 节流（setTimeout 后台会被限制到 1 次/分钟）
+    // Worker 内部用 setTimeout 计时，通过 postMessage 回调主线程，Worker 线程不受节流
+    var _workerTimer = null;
+    var _workerCallbacks = {};  // id → resolve 回调映射，支持多个并发 wait()
+    var _workerNextId = 0;
+    try {
+        var _workerBlob = new Blob([
+            'onmessage=function(e){' +
+                'setTimeout(function(){postMessage(e.data.id)},e.data.ms)' +
+            '}'
+        ], { type: 'text/javascript' });
+        _workerTimer = new Worker(URL.createObjectURL(_workerBlob));
+        _workerTimer.onmessage = function (e) {
+            var cb = _workerCallbacks[e.data];
+            if (cb) { delete _workerCallbacks[e.data]; cb(); }
+        };
+    } catch (e) {
+        // CSP 阻止或不支持 → 回退到 setTimeout
+        _workerTimer = null;
+    }
+
     function wait(ms) {
+        // 优先用 Web Worker 计时（不受后台节流），失败则回退 setTimeout
+        if (_workerTimer) {
+            return new Promise(function (resolve) {
+                var id = ++_workerNextId;
+                _workerCallbacks[id] = resolve;
+                _workerTimer.postMessage({ id: id, ms: ms });
+            });
+        }
         return new Promise(function (r) { setTimeout(r, ms); });
     }
 
