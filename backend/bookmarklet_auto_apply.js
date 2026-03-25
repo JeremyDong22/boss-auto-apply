@@ -1,4 +1,5 @@
-// v13.6 - Boss 直聘自动投递 Bookmarklet
+// v13.7 - Boss 直聘自动投递 Bookmarklet
+// v13.7 修复：tryScrollForMore 等待时间 500ms→1000ms，减少因加载慢误判"到底了"的概率
 // v13.6 改进：用 Web Worker 计时器替代 setTimeout，解决后台标签页被 Chrome 节流导致投递变慢的问题
 // v13.5 改进：区分"还剩X次"温馨提示和"已达上限"限流弹窗，提醒自动点掉继续投，上限才停
 // v13.4 改进：达到150人上限时保留限流弹窗不关闭，让用户看到成果
@@ -84,7 +85,7 @@
             <a href="https://boss-frontend.preview.aliyun-zeabur.cn" target="_blank"
                 style="display:block;text-align:center;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.7);text-decoration:none"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'">买卡密 / 找客服</a>
-            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.6</div>
+            <div style="position:absolute;bottom:8px;right:12px;font-size:9px;opacity:0.35">v13.7</div>
         </div>`;
     document.body.appendChild(panel);
 
@@ -474,7 +475,7 @@
 
             // 直接滚到最底部，确保触发懒加载
             window.scrollTo(0, document.body.scrollHeight);
-            await wait(500);
+            await wait(1000);
             if (!running) return false;
             if (checkChatBlock()) return false;
 
